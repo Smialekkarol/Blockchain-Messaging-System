@@ -1,0 +1,37 @@
+@startuml simple
+
+hide footbox
+
+box "Node1"
+participant Node_app1
+participant rabbit_server1
+end box
+
+box "Node2"
+participant Node_app2
+participant rabbit_server2
+end box
+
+box "Node3"
+participant Node_app3
+participant rabbit_server3
+end box
+
+box "Node4"
+participant Node_app4
+participant rabbit_server4
+end box
+
+Node_app1 -> rabbit_server2
+Node_app2 -> rabbit_server2
+Node_app2 <- rabbit_server2
+
+Node_app1 -> rabbit_server3
+Node_app3 -> rabbit_server3
+Node_app3 <- rabbit_server3
+
+Node_app1 -> rabbit_server4
+Node_app4 -> rabbit_server4
+Node_app4 <- rabbit_server4
+
+@enduml

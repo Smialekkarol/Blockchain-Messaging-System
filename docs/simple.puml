@@ -1,0 +1,19 @@
+@startuml simple
+
+hide footbox
+
+box "Node1"
+participant Node_app1
+participant rabbit_server1
+end box
+
+box "Node2"
+participant Node_app2
+participant rabbit_server2
+end box
+
+Node_app1 -> rabbit_server2
+Node_app2 -> rabbit_server2
+Node_app2 <- rabbit_server2
+
+@enduml
