@@ -1,0 +1,32 @@
+@startuml client fetch initial data diagram
+
+participant protocol_node
+box "user computer" #LightBlue
+participant gateway
+participant client
+end box
+
+autonumber
+
+client -> gateway : Initiate connection by socket
+note right
+    All communication happens throught gateway.
+    At initialization socket connection is established
+end note
+
+client -> gateway : Fetch chat initial data - history of existing chat. 
+note right
+    For instance 100 last messages
+end note
+gateway -> protocol_node : Fetch chat initial data - history of existing chat
+protocol_node -> gateway : Give requested data
+note right
+    Encrypt the data and adapts it to format that node can consume.
+end note
+gateway -> client : Fetch chat initial data - history of existing chat
+note right
+    Unencrypt the data and adapts it to format that client can consume.
+end note
+
+
+@enduml

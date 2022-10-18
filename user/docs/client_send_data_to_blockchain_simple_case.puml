@@ -1,0 +1,32 @@
+@startuml client send data to blockchain simple case diagram
+
+participant protocol_node
+box "user computer" #LightBlue
+participant gateway
+participant client
+end box
+
+autonumber
+
+client -> gateway : Fetch initial data process [client_fetch_initial_data copy.pu]
+note right
+    Here happens process from client_fetch_initial_data copy.pu diagram
+end note
+
+client -> gateway : Send message
+gateway -> protocol_node : Attempt to send encrypted data to node
+alt Successful Attempt to send encrypted data to node
+    protocol_node -> gateway : Return status block has been added successfully
+    gateway -> client : Return status block has been added successfully
+else Failed to send encrypted data to node due to timeout or connection error
+    protocol_node -> gateway : Return status whether block has failed to be added
+    loop 3 times
+        gateway -> protocol_node : Attempt to send encrypted data to node maximum 3 retries
+    end
+    gateway -> client : Return status whether block has been added successfully
+else Failed to send encrypted data to node due to real error
+    protocol_node -> gateway : Return status whether block has failed to be added
+    gateway -> client : Return status whether block has been added successfully
+end
+
+@enduml

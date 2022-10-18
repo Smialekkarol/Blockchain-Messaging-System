@@ -13,7 +13,6 @@ participant rabbit_server2
 end box
 
 Node_app1 -> rabbit_server2
-Node_app2 -> rabbit_server2
 Node_app2 <- rabbit_server2
 
 @enduml

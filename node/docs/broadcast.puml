@@ -23,15 +23,12 @@ participant rabbit_server4
 end box
 
 Node_app1 -> rabbit_server2
-Node_app2 -> rabbit_server2
 Node_app2 <- rabbit_server2
 
 Node_app1 -> rabbit_server3
-Node_app3 -> rabbit_server3
 Node_app3 <- rabbit_server3
 
 Node_app1 -> rabbit_server4
-Node_app4 -> rabbit_server4
 Node_app4 <- rabbit_server4
 
 @enduml
