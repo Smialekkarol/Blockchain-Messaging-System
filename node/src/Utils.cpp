@@ -4,10 +4,12 @@
 #include <cctype>
 #include <sstream>
 
-std::optional<NodeInfo> Utils::getNodeByIp(const std::string &ip,
-                                           const NodeConfiguration &config) {
-  auto it = std::find_if(config.nodes.begin(), config.nodes.end(),
-                         [ip](const NodeInfo &node) { return ip == node.ip; });
+std::optional<NodeInfo>
+Utils::getNodeByAddress(const std::string &address,
+                        const NodeConfiguration &config) {
+  auto it = std::find_if(
+      config.nodes.begin(), config.nodes.end(),
+      [address](const NodeInfo &node) { return address == node.address; });
   if (it != config.nodes.end()) {
     return std::make_optional(*it);
   }

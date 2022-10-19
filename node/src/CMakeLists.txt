@@ -11,6 +11,7 @@ find_package(amqpcpp REQUIRED)
 find_package(Threads REQUIRED)
 find_package(Libev REQUIRED)
 find_package(yaml-cpp REQUIRED)
+find_package(spdlog REQUIRED)
 
 add_executable(node ${NODE_SOURCES})
-target_link_libraries(node amqpcpp Threads::Threads ${LIBEV_LIBRARIES} ${YAML_CPP_LIBRARIES})
+target_link_libraries(node amqpcpp Threads::Threads ${LIBEV_LIBRARIES} ${YAML_CPP_LIBRARIES} spdlog::spdlog)

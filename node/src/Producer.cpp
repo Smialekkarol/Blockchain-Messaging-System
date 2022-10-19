@@ -4,10 +4,12 @@
 #include "Utils.hpp"
 #include <algorithm>
 #include <iostream>
+#include <spdlog/spdlog.h>
 #include <vector>
 
 Producer::Producer(const NodeConfiguration &config) : config(config) {}
 
+// this method will be removed
 void Producer::run() {
   std::string command;
   bool shouldExit{false};
@@ -26,20 +28,20 @@ bool Producer::parseCommand(const std::string &command) {
   const auto operation = Utils::toLower(args[0]);
   if (operation.compare("send") == 0) {
     if (args.size() < 3) {
-      std::cout << "send: <node_name> <message>\n";
+      spdlog::info("send: <node_name> <message>");
       return false;
     }
     const auto &nodeName = args[1];
     const auto &message = args[2];
     const auto &node = Utils::getNodeByName(nodeName, config);
     if (not node.has_value()) {
-      std::cout << "send: node not registered\n";
+      spdlog::info("send: node not registered");
       return false;
     }
     sendTo(node.value(), message);
   } else if (operation.compare("broadcast") == 0) {
     if (args.size() < 2) {
-      std::cout << "broadcast: <message>\n";
+      spdlog::info("broadcast: <message>");
       return false;
     }
     const auto &message = args[1];
@@ -49,31 +51,30 @@ bool Producer::parseCommand(const std::string &command) {
   } else if (operation.compare("exit") == 0) {
     return true;
   } else if (operation.compare("help") == 0) {
-    std::cout << "Possible commands: [send, broadcast, exit]\n";
+    spdlog::info("Possible commands: [send, broadcast, exit]");
   } else {
-    std::cout << "Unknown command\n";
+    spdlog::info("Unknown command");
   }
   return false;
 }
 
 void Producer::sendTo(const NodeInfo &node, const std::string &message) {
-  std::cout << "Sending message to (name:" << node.name << ", ip:" << node.ip
-            << ")\n";
+  spdlog::debug("Sending message to (name:{}, address:{})", node.name,
+                node.address);
   auto *loop = ev_loop_new(0);
   ConnectionHandler handler(loop);
 
-  AMQP::TcpConnection connection(&handler, AMQP::Address(node.ip));
+  AMQP::TcpConnection connection(&handler, AMQP::Address(node.address));
   AMQP::TcpChannel channel(&connection);
-  channel.onError([](const char *message) {
-    std::cout << "Channel error: " << message << std::endl;
-  });
+  channel.onError(
+      [](const char *message) { spdlog::error("Channel error: {}", message); });
   channel.declareQueue(node.name, AMQP::durable)
       .onSuccess([&connection, &channel, &node,
                   &message](const std::string &name, uint32_t messagecount,
                             uint32_t consumercount) {
         channel.publish("", node.name, message);
       })
-      .onError([](const char *message) { std::cout << message << "\n"; })
+      .onError([](const char *message) { spdlog::error(message); })
       .onFinalize([&connection]() { connection.close(); });
   ev_run(loop, 0);
 }

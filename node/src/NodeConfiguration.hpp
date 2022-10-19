@@ -5,10 +5,10 @@
 
 struct NodeInfo {
   NodeInfo() = default;
-  NodeInfo(const std::string &ip, const std::string &name)
-      : ip(ip), name(name) {}
+  NodeInfo(const std::string &name, const std::string &address)
+      : name(name), address(address) {}
 
-  std::string ip;
+  std::string address;
   std::string name;
 };
 

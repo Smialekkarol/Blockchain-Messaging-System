@@ -1,12 +1,13 @@
 #include <amqpcpp.h>
 #include <amqpcpp/libev.h>
 #include <ev.h>
+#include <spdlog/spdlog.h>
 
 class ConnectionHandler : public AMQP::LibEvHandler {
 private:
   virtual void onError(AMQP::TcpConnection *connection,
                        const char *message) override {
-    std::cout << "error: " << message << std::endl;
+    spdlog::error(message);
   }
 
   virtual void onConnected(AMQP::TcpConnection *connection) override {}

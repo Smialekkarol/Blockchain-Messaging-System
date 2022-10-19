@@ -4,6 +4,7 @@
 
 std::optional<NodeConfiguration>
 ConfigurationReader::read(const std::string &configPath) {
+  // TODO: add proper error handling
   NodeConfiguration nodeConfiguration;
   auto config = YAML::LoadFile(configPath);
 
@@ -12,7 +13,7 @@ ConfigurationReader::read(const std::string &configPath) {
   }
 
   nodeConfiguration.self.name = config["name"].as<std::string>();
-  nodeConfiguration.self.ip = config["address"].as<std::string>();
+  nodeConfiguration.self.address = config["address"].as<std::string>();
 
   const auto &nodes = config["known_nodes"];
   for (unsigned int i = 0; i < nodes.size(); i++) {
