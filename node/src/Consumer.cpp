@@ -19,7 +19,7 @@ void Consumer::main(const NodeConfiguration &config) {
       .onError([](const char *message) { std::cout << message << "\n"; });
   channel.consume(config.self.name, AMQP::noack)
       .onReceived([](const AMQP::Message &msg, uint64_t tag, bool redelivered) {
-        std::cout << "Received: " << msg.message() << std::endl;
+        std::cout << "Received: " << msg.body() << std::endl;
       });
   ev_run(loop, 0);
 }
