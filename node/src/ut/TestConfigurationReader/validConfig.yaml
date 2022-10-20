@@ -1,0 +1,9 @@
+name: NodeA
+address: "amqp://localhost/"
+known_nodes:
+  - 
+    name: NodeB
+    address: "amqp://localhost/"
+  - 
+    name: NodeC
+    address: "amqp://localhost/"
