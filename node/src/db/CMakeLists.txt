@@ -34,3 +34,5 @@ if(Boost_FOUND)
 #   target_include_directories(redis PRIVATE ${Boost_INCLUDE_DIRS})
   target_link_libraries(redis PRIVATE ${Boost_LIBRARIES})
 endif()
+
+target_include_directories(node PUBLIC .)

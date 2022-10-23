@@ -6,6 +6,7 @@ set(NODE_SOURCES
   ${NODE_DIR}/Utils.cpp
   ${NODE_DIR}/ConfigurationReader.cpp
 )
+
 include_directories(${NODE_DIR})
 
 find_package(amqpcpp REQUIRED)
@@ -21,3 +22,7 @@ add_ut(TestConfigurationReader
 
 add_executable(node ${NODE_SOURCES})
 target_link_libraries(node amqpcpp Threads::Threads ${LIBEV_LIBRARIES} ${YAML_CPP_LIBRARIES} spdlog::spdlog)
+target_include_directories(node PUBLIC .)
+
+add_subdirectory(common)
+add_subdirectory(itf)

@@ -1,6 +1,4 @@
-#pragma once
-
-#include <chrono>
+#include "Utils.hpp"
 
 namespace common::utils {
 const uint64_t getTimeStamp() {

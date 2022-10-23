@@ -109,6 +109,15 @@ RUN cd /home && git clone https://github.com/jbeder/yaml-cpp.git \
   && cd ../.. \
   && rm -rf yaml-cpp
 
+RUN cd /home && git clone git@github.com:enki/libev.git \
+  && cd libev \
+  && ./configure \
+  && make -j $(($(nproc)-2)) \
+  && make install \
+  && make clean \
+  && cd .. \
+  && rm -rf libev
+
 COPY install_rabbitmq.sh /home/install_rabbitmq.sh
 RUN /home/install_rabbitmq.sh
 
