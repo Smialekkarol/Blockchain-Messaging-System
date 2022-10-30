@@ -2,6 +2,9 @@
 
 #include "Message.hpp"
 
+#include <boost/archive/text_iarchive.hpp>
+#include <boost/archive/text_oarchive.hpp>
+
 namespace itf {
 Message::Message() = default;
 Message::Message(const uint64_t timestamp_, const std::string &data_,
