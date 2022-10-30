@@ -1,5 +1,6 @@
-g++ WebSocketServer.cpp  -o WebSocketServer -L /usr/lib/ -lboost_system -lboost_thread -lpthread
+How to start client?
+in build/ ./src/user ip_address port serverName
 
-g++ HTTPServer.cpp  -o HTTPServer  -lboost_system -lboost_thread -lpthread -lamqpcpp -lev
+example:
 
-g++ Gui.cpp `wx-config --cxxflags --libs` -o gui
+./src/user 127.0.0.1 8080 NodeA

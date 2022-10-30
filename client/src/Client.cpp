@@ -71,7 +71,6 @@
             beast::flat_buffer buffer;
             webSocketStream.read(buffer);
             webSocketStream.close(websocket::close_code::normal);
-            std::cout << beast::make_printable(buffer.data()) << std::endl;
     }
     catch(std::exception const& e)
         {

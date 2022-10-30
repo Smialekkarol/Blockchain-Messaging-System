@@ -1,10 +1,7 @@
-message format for: <init>
-target;
-nodeName;
-queName
+how to start gateway?
+in build folder
 
-message format for: <send>, <getData>
-target;
-nodeName;
-queName;
-message
+./src/gateway ip_address port
+example:
+
+./src/gateway 127.0.0.1 8080
