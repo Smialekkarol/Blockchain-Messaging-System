@@ -23,9 +23,8 @@ void Consumer::main(const NodeConfiguration &config) {
   channel.consume(config.self.name + "_ControlChannel", AMQP::noack)
       .onReceived([&](const AMQP::Message &msg, uint64_t tag, bool redelivered) {
         std::string message{msg.body(), msg.body() + msg.bodySize()};
-        spdlog::debug("Received: {}", message + config.self.name);
+        spdlog::debug(config.self.name + "_ControlChannel" + " Received: {}", message);
         channelToBeCreated = message;
-        
        channel.declareQueue(channelToBeCreated, AMQP::durable)
       .onError([](const char *message) { spdlog::error(message); });
       });

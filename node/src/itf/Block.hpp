@@ -20,5 +20,8 @@ struct Block {
 namespace boost::serialization {
 template <class Archive>
 void serialize(Archive &archive, ::itf::Block &block,
-               const unsigned int version);
+               const unsigned int version) {
+  archive &block.timestamp;
+  archive &block.data;
+}
 } // namespace boost::serialization

@@ -1,6 +1,5 @@
 set(GATEWAY_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 set(GATEWAY_SOURCES 
-  ${GATEWAY_DIR}/HTTPServer.cpp
   ${GATEWAY_DIR}/WebSocketServer.cpp
   ${GATEWAY_DIR}/App.cpp
 )

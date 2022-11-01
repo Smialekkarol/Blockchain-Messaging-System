@@ -34,6 +34,5 @@ private:
 
     void read_request();
     void proccesRequestData(std::string message) const;
-    void SendMessage(std::string nodeName, std::string queName, std::string message) const;
-    void CreateNewQue(std::string nodeAddres, std::string nodeName, std::string controlQueName, std::string queToBeCreated) const;
+    void SendMessage(std::string nodeAddres, std::string nodeName, std::string queName, std::string message) const;
 };

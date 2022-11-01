@@ -42,72 +42,51 @@ void websocket_connection::read_request()
 .detach();
 }
 
-void websocket_connection::proccesRequestData(std::string message) const
+void websocket_connection::proccesRequestData(std::string data) const
 {
     boost::char_separator<char> sep(";");
-    tokenizer tokens(message, sep);
-    std::vector<std::string> attributes;
+    boost::char_separator<char> at("@");
 
-    BOOST_FOREACH (std::string const& token, tokens) {
-        attributes.push_back(token);
+    tokenizer dataTokens(data, at);
+    std::vector<std::string> dataAttributes;
+    BOOST_FOREACH (std::string const& token, dataTokens) {
+        dataAttributes.push_back(token);
+
     }
 
-    auto target = attributes[0];
-    auto nodeName = attributes[1];
-    
+    auto header = dataAttributes[0];
+    auto message = dataAttributes[1];
+
+    tokenizer headerTokens(header, sep);
+    std::vector<std::string> headerAttributes;
+    BOOST_FOREACH (std::string const& token, headerTokens) {
+        headerAttributes.push_back(token);
+    }
+
+    auto target = headerAttributes[0];
+    auto nodeName = headerAttributes[1];
+    auto queName = headerAttributes[2];
 
     if (target == "CreateChannel") {
-        auto controlQueName = attributes[1] + "_ControlChannel";
-        auto data = attributes[2];
-        this->CreateNewQue("amqp://localhost/", nodeName, controlQueName, data);
+        this->SendMessage("amqp://localhost/", nodeName, queName, message);
         std::cout<<"CreateChannel request received\n";
     }
     if(target == "Send"){
-        auto queName = attributes[2];
-        auto data = attributes[3];
+        this->SendMessage("amqp://localhost/", nodeName, queName, message);
         std::cout<<"Send request received\n"<<nodeName;
-        this->SendMessage(nodeName, queName, data);
     }
     if(target == "GetData"){
-        auto queName = attributes[2];
-        auto data = attributes[3];
         std::cout<<"GetData request received\n";
     }
 }
 
-void websocket_connection::CreateNewQue(std::string nodeAddress, std::string nodeName, std::string controlQueName, std::string queToBeCreated) const
-{
-    const std::string& message{queToBeCreated};
-    NodeInfo node{ nodeAddress, nodeName };
+void websocket_connection::SendMessage(std::string nodeAddress, std::string nodeName, std::string queName, std::string message) const{
 
+    NodeInfo node{ nodeAddress, nodeName };
     auto* loop = ev_loop_new(0);
     ConnectionHandler handler(loop);
 
     AMQP::TcpConnection connection(&handler, AMQP::Address(nodeAddress));
-    AMQP::TcpChannel channel(&connection);
-    channel.onError([](const char* message) {
-        std::cout << "Channel error: " << message << std::endl;
-    });
-    std::cout<<"message sent on "<<controlQueName<<std::endl;
-    channel.declareQueue(controlQueName, AMQP::durable)
-        .onSuccess([&connection, &channel, &node,
-            &message](const std::string& name, uint32_t messagecount,
-            uint32_t consumercount) {
-            channel.publish("", name, message);
-            
-        })
-        .onError([](const char* message) { std::cout << message << "\n"; })
-        .onFinalize([&connection]() { connection.close(); });
-    ev_run(loop, 0);
-}
-
-void websocket_connection::SendMessage(std::string nodeName, std::string queName, std::string message) const{
-
-    NodeInfo node{ "amqp://localhost/", nodeName };
-    auto* loop = ev_loop_new(0);
-    ConnectionHandler handler(loop);
-
-    AMQP::TcpConnection connection(&handler, AMQP::Address("amqp://localhost/"));
     AMQP::TcpChannel channel(&connection);
     channel.onError([](const char* message) {
         std::cout << "Channel error: " << message << std::endl;
@@ -124,6 +103,7 @@ void websocket_connection::SendMessage(std::string nodeName, std::string queName
         .onFinalize([&connection]() { connection.close(); });
     ev_run(loop, 0);
 }
+
 void websocket_server(tcp::acceptor& acceptor, tcp::socket& socket)
 {
     acceptor.async_accept(socket,

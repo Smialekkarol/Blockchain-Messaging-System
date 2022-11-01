@@ -17,7 +17,7 @@ int main(int argc, char** argv)
         const auto  port = argv[2];
         const auto  serverName = argv[3];
         net::io_context ioc;
-        Client client = Client(ioc, serverName);
+        Client client = Client(ioc, serverName, "nazwaKlienta");
 
         std::string command;
         bool shouldExit{false};
