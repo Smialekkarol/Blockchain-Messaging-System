@@ -68,20 +68,29 @@ RUN cd /home && wget https://download.redis.io/redis-stable.tar.gz \
   && tar -xzvf redis-stable.tar.gz \
   && rm -rf redis-stable.tar.gz \
   && cd redis-stable \
-  && make -j $(nproc) \
-  && make install \
+  && make \
+  && make -j $(nproc) install \
   && make clean \
   && ldconfig \
   && cd .. \
   && rm -rf redis-stable
+
+RUN cd /home && git clone https://github.com/redis/hiredis.git \
+  && cd hiredis \
+  && make \
+  && make -j $(nproc) install \
+  && make clean \
+  && ldconfig \
+  && cd .. \
+  && rm -rf hiredis
 
 RUN cd /home && git clone https://github.com/sewenew/redis-plus-plus.git \
   && cd redis-plus-plus \
   && mkdir build \
   && cd build \
   && cmake .. \
-  && make -j $(nproc) \
-  && make install \
+  && make \
+  && make -j $(nproc) install \
   && make clean \
   && ldconfig \
   && cd ../.. \
@@ -107,6 +116,17 @@ RUN cd /home && git clone https://github.com/jbeder/yaml-cpp.git \
   && make install \
   && make clean \
   && cd ../.. \
+  && rm -rf yaml-cpp
+
+RUN cd /home && git clone https://github.com/jbeder/yaml-cpp.git \
+  && cd yaml-cpp \
+  && mkdir build \
+  && cd build \
+  && cmake .. -DYAML_BUILD_SHARED_LIBS=on \
+  && make -j $(nproc) \
+  && make install \
+  && make clean \
+  && cd .. \
   && rm -rf yaml-cpp
 
 RUN cd /home && git clone git@github.com:enki/libev.git \
