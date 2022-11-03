@@ -1,7 +1,7 @@
 #include "ConfigurationReader.hpp"
 #include "Consumer.hpp"
-#include "common/NodeConfiguration.hpp"
 #include "Producer.hpp"
+#include "common/NodeConfiguration.hpp"
 #include <spdlog/spdlog.h>
 
 void logConfiguration(const common::NodeConfiguration &config) {

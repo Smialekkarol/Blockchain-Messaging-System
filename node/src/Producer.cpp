@@ -1,7 +1,7 @@
 #include "Producer.hpp"
+#include "Utils.hpp"
 #include "common/ConnectionHandler.hpp"
 #include "common/NodeConfiguration.hpp"
-#include "Utils.hpp"
 #include "common/utils/Text.hpp"
 #include <algorithm>
 #include <iostream>
@@ -59,7 +59,8 @@ bool Producer::parseCommand(const std::string &command) {
   return false;
 }
 
-void Producer::sendTo(const common::NodeInfo &node, const std::string &message) {
+void Producer::sendTo(const common::NodeInfo &node,
+                      const std::string &message) {
   spdlog::debug("Sending message to (name:{}, address:{})", node.name,
                 node.address);
   auto *loop = ev_loop_new(0);

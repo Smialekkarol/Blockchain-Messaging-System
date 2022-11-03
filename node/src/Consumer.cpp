@@ -1,6 +1,6 @@
 #include "Consumer.hpp"
-#include "common/ConnectionHandler.hpp"
 #include "Utils.hpp"
+#include "common/ConnectionHandler.hpp"
 #include <amqpcpp.h>
 #include <spdlog/spdlog.h>
 #include <thread>
