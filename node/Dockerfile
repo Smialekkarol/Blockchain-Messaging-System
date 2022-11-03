@@ -18,7 +18,8 @@ RUN DEBIAN_FRONTEND=noninteractive apt install -y \
   openssl \
   libssl-dev \
   libsasl2-dev \
-  libev-dev
+  libev-dev \
+  libmsgsl-dev
 
 # libraries
 RUN cd /home && wget https://downloads.sourceforge.net/project/boost/boost/1.80.0/boost_1_80_0.tar.gz \

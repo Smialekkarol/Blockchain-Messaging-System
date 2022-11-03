@@ -14,6 +14,7 @@ find_package(Threads REQUIRED)
 find_package(Libev REQUIRED)
 find_package(yaml-cpp REQUIRED)
 find_package(spdlog REQUIRED)
+find_package(GSL REQUIRED)
 
 find_path(HIREDIS_HEADER hiredis REQUIRED)
 target_include_directories(node PUBLIC ${HIREDIS_HEADER})
@@ -38,7 +39,7 @@ add_ut(TestConfigurationReader
   LIB ${YAML_CPP_LIBRARIES} spdlog::spdlog
 )
 
-target_link_libraries(node PRIVATE common amqpcpp Threads::Threads ${LIBEV_LIBRARIES} ${YAML_CPP_LIBRARIES} spdlog::spdlog)
+target_link_libraries(node PRIVATE common amqpcpp Threads::Threads ${LIBEV_LIBRARIES} ${YAML_CPP_LIBRARIES} spdlog::spdlog GSL::gsl)
 target_include_directories(node PUBLIC .)
 
 add_subdirectory(db)
