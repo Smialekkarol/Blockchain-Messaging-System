@@ -1,11 +1,11 @@
 #pragma once
 
-#include "NodeConfiguration.hpp"
+#include "common/NodeConfiguration.hpp"
 
 class Consumer {
 public:
-  static void run(const NodeConfiguration &config);
+  static void run(const common::NodeConfiguration &config);
 
 private:
-  static void main(const NodeConfiguration &config);
+  static void main(const common::NodeConfiguration &config);
 };

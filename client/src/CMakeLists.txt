@@ -2,10 +2,7 @@ set(USER_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 set(USER_SOURCES 
   ${USER_DIR}/Client.cpp
   ${USER_DIR}/App.cpp
-  /root/node/src/itf/Message.cpp
-  /root/node/src/itf/Header.cpp
   ${USER_DIR}/Utils.cpp
-  /root/node/src/common/utils/Utils.cpp
 )
 
 add_executable(user ${USER_SOURCES})
@@ -17,6 +14,7 @@ if(Boost_FOUND)
 endif()
 
 
-target_link_libraries(user 
+target_link_libraries(user PRIVATE
+            common
             boost_system
             pthread)

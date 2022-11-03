@@ -1,8 +1,11 @@
+#pragma once
+
 #include <amqpcpp.h>
 #include <amqpcpp/libev.h>
 #include <ev.h>
 #include <spdlog/spdlog.h>
 
+namespace common {
 class ConnectionHandler : public AMQP::LibEvHandler {
 private:
   virtual void onError(AMQP::TcpConnection *connection,
@@ -18,3 +21,4 @@ public:
   ConnectionHandler(struct ev_loop *loop) : AMQP::LibEvHandler(loop) {}
   virtual ~ConnectionHandler() = default;
 };
+}

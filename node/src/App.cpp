@@ -1,10 +1,10 @@
 #include "ConfigurationReader.hpp"
 #include "Consumer.hpp"
-#include "NodeConfiguration.hpp"
+#include "common/NodeConfiguration.hpp"
 #include "Producer.hpp"
 #include <spdlog/spdlog.h>
 
-void logConfiguration(const NodeConfiguration &config) {
+void logConfiguration(const common::NodeConfiguration &config) {
   const auto &nodes{config.nodes};
   spdlog::info("Loaded {} node(s)", nodes.size());
   for (const auto &node : nodes) {

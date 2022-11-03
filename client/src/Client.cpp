@@ -8,7 +8,7 @@
             std::string header = "CreateChannel;" + nodeName + ";" + queName;
 
             // itf::Header header("CreateChannel", nodeName, queName);
-            itf::Message message(common::utils::getTimeStamp(), queToBeCreated, clientName);
+            common::itf::Message message(common::utils::Timestamp::get(), queToBeCreated, clientName);
 
             serialization::MessageSerializer messageSerializer;
             // serialization::HeaderSerializer headerSerializer;
@@ -35,7 +35,7 @@
 
             std::string header = "Send;" + nodeName + ";" + queName;
             // itf::Header header("Send", nodeName, queName);
-            itf::Message message(common::utils::getTimeStamp(), dataToSend, clientName);
+            common::itf::Message message(common::utils::Timestamp::get(), dataToSend, clientName);
 
             std::string data = header + "@" + messageSerializer.serialize(message) + "\n";
             // std::string data = headerSerializer.serialize(header); + "@" + messageSerializer.serialize(message) + "\n";
@@ -59,7 +59,7 @@
 
             std::string header = "GetData;" + nodeName + ";" + queName;
             // itf::Header header("GetData", nodeName, queName);
-            itf::Message message(common::utils::getTimeStamp(), RequestData, clientName);
+            common::itf::Message message(common::utils::Timestamp::get(), RequestData, clientName);
 
             std::string data = header + "@" + messageSerializer.serialize(message) + "\n";
             // std::string data = headerSerializer.serialize(header); + "@" + messageSerializer.serialize(message) + "\n";

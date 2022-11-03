@@ -7,11 +7,11 @@ pre-conditions:
 - mkdir build
 - cd build
 
-### Build all
-- cmake ..
-
 ### Build node only
-- cmake .. -DBUILD_GATEWAY=OFF -DBUILD_CLIENT=OFF
+- cmake .. -DBUILD_NODE=ON
 
 ### Build node and gateway
-- cmake .. -DBUILD_CLIENT=OFF
+- cmake .. -DBUILD_NODE=ON -DBUILD_GATEWAY=ON
+
+### Build all
+- cmake .. -DBUILD_NODE=ON -DBUILD_GATEWAY=ON -DBUILD_CLIENT=ON

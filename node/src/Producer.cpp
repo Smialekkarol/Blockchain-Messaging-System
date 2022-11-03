@@ -1,13 +1,14 @@
 #include "Producer.hpp"
-#include "ConnectionHandler.hpp"
-#include "NodeConfiguration.hpp"
+#include "common/ConnectionHandler.hpp"
+#include "common/NodeConfiguration.hpp"
 #include "Utils.hpp"
+#include "common/utils/Text.hpp"
 #include <algorithm>
 #include <iostream>
 #include <spdlog/spdlog.h>
 #include <vector>
 
-Producer::Producer(const NodeConfiguration &config) : config(config) {}
+Producer::Producer(const common::NodeConfiguration &config) : config(config) {}
 
 // this method will be removed
 void Producer::run() {
@@ -24,8 +25,8 @@ void Producer::run() {
 }
 
 bool Producer::parseCommand(const std::string &command) {
-  auto args = Utils::tokenizeBySpace(command);
-  const auto operation = Utils::toLower(args[0]);
+  auto args = common::utils::Text::tokenizeBySpace(command);
+  const auto operation = common::utils::Text::toLower(args[0]);
   if (operation.compare("send") == 0) {
     if (args.size() < 3) {
       spdlog::info("send: <node_name> <message>");
@@ -58,11 +59,11 @@ bool Producer::parseCommand(const std::string &command) {
   return false;
 }
 
-void Producer::sendTo(const NodeInfo &node, const std::string &message) {
+void Producer::sendTo(const common::NodeInfo &node, const std::string &message) {
   spdlog::debug("Sending message to (name:{}, address:{})", node.name,
                 node.address);
   auto *loop = ev_loop_new(0);
-  ConnectionHandler handler(loop);
+  common::ConnectionHandler handler(loop);
 
   AMQP::TcpConnection connection(&handler, AMQP::Address(node.address));
   AMQP::TcpChannel channel(&connection);

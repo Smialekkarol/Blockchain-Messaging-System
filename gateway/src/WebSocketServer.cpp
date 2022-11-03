@@ -3,11 +3,11 @@
 #include <boost/tokenizer.hpp>
 #include <boost/foreach.hpp>
 
-#include "/root/node/src/NodeConfiguration.hpp"
+#include "common/NodeConfiguration.hpp"
 #include <amqpcpp.h>
 #include <amqpcpp/libev.h>
 #include <ev.h>
-#include "/root/node/src/ConnectionHandler.hpp"
+#include "common/ConnectionHandler.hpp"
 
 typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
 
@@ -82,9 +82,9 @@ void websocket_connection::proccesRequestData(std::string data) const
 
 void websocket_connection::SendMessage(std::string nodeAddress, std::string nodeName, std::string queName, std::string message) const{
 
-    NodeInfo node{ nodeAddress, nodeName };
+    common::NodeInfo node{ nodeAddress, nodeName };
     auto* loop = ev_loop_new(0);
-    ConnectionHandler handler(loop);
+    common::ConnectionHandler handler(loop);
 
     AMQP::TcpConnection connection(&handler, AMQP::Address(nodeAddress));
     AMQP::TcpChannel channel(&connection);

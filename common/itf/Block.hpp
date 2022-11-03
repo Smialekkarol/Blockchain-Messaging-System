@@ -6,7 +6,7 @@
 
 #include "Message.hpp"
 
-namespace itf {
+namespace common::itf {
 struct Block {
   Block();
   Block(const std::vector<Message> &data);
@@ -15,11 +15,11 @@ struct Block {
   uint64_t timestamp{0};
   std::vector<Message> data{};
 };
-} // namespace itf
+} // namespace common::itf
 
 namespace boost::serialization {
 template <class Archive>
-void serialize(Archive &archive, ::itf::Block &block,
+void serialize(Archive &archive, ::common::itf::Block &block,
                const unsigned int version) {
   archive &block.timestamp;
   archive &block.data;

@@ -6,7 +6,8 @@ set(GATEWAY_SOURCES
 
 add_executable(gateway ${GATEWAY_SOURCES})
 
-target_link_libraries(gateway 
+target_link_libraries(gateway PRIVATE
+            common
             boost_system
             pthread
             amqpcpp 

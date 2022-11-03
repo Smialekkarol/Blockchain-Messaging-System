@@ -38,10 +38,7 @@ add_ut(TestConfigurationReader
   LIB ${YAML_CPP_LIBRARIES} spdlog::spdlog
 )
 
-target_link_libraries(node PRIVATE amqpcpp Threads::Threads ${LIBEV_LIBRARIES} ${YAML_CPP_LIBRARIES} spdlog::spdlog)
+target_link_libraries(node PRIVATE common amqpcpp Threads::Threads ${LIBEV_LIBRARIES} ${YAML_CPP_LIBRARIES} spdlog::spdlog)
 target_include_directories(node PUBLIC .)
 
-add_subdirectory(common)
-add_subdirectory(itf)
-add_subdirectory(serialization)
 add_subdirectory(db)

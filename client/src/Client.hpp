@@ -11,9 +11,10 @@
 #include <string>
 #include <chrono>
 
-#include "/root/node/src/common/utils/Utils.hpp"
-#include "/root/node/src/serialization/MessageSerializer.hpp"
-#include "/root/node/src/serialization/HeaderSerializer.hpp"
+#include "common/utils/Timestamp.hpp"
+#include "common/utils/Text.hpp"
+#include "common/serialization/MessageSerializer.hpp"
+#include "common/serialization/HeaderSerializer.hpp"
 
 namespace beast = boost::beast;         // from <boost/beast.hpp>
 namespace http = beast::http;           // from <boost/beast/http.hpp>

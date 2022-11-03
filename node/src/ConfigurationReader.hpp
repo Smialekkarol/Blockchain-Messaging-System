@@ -3,9 +3,11 @@
 #include <optional>
 #include <string>
 
-class NodeConfiguration;
+namespace common {
+  class NodeConfiguration;
+}
 
 class ConfigurationReader {
 public:
-  static std::optional<NodeConfiguration> read(const std::string &configPath);
+  static std::optional<common::NodeConfiguration> read(const std::string &configPath);
 };

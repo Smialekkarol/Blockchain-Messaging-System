@@ -8,10 +8,11 @@ set(COMMON_CMAKE_MODULES "${CMAKE_CURRENT_SOURCE_DIR}/common/cmake")
 set(CMAKE_MODULE_PATH ${COMMON_CMAKE_MODULES} ${CMAKE_MODULE_PATH})
 include(add_ut)
 
-option(BUILD_NODE "Enable node build" ON)
-option(BUILD_GATEWAY "Enable gatewat build" ON)
-option(BUILD_CLIENT "Enable client build" ON)
+option(BUILD_NODE "Enable node build" OFF)
+option(BUILD_GATEWAY "Enable gateway build" OFF)
+option(BUILD_CLIENT "Enable client build" OFF)
 
+set(REPO_ROOT_DIR "${CMAKE_CURRENT_SOURCE_DIR}")
 add_subdirectory(common)
 
 if(BUILD_NODE)

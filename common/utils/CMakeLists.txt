@@ -1,0 +1,7 @@
+set(UTILS_DIR "${CMAKE_CURRENT_SOURCE_DIR}")
+set(UTILS_SOURCES 
+  ${UTILS_DIR}/Timestamp.cpp
+  ${UTILS_DIR}/Text.cpp
+)
+
+target_sources(common PUBLIC ${UTILS_SOURCES})

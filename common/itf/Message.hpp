@@ -2,7 +2,7 @@
 
 #include <string>
 
-namespace itf {
+namespace common::itf {
 
 struct Message {
   Message();
@@ -14,12 +14,12 @@ struct Message {
   std::string author{};
 };
 
-} // namespace itf
+} // namespace common::itf
 
 namespace boost::serialization {
 template <class Archive>
-void serialize(Archive &archive, ::itf::Message &message,
-               const unsigned int version){
+void serialize(Archive &archive, ::common::itf::Message &message,
+               const unsigned int version) {
   archive &message.timestamp;
   archive &message.data;
   archive &message.author;

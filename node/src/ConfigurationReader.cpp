@@ -1,11 +1,11 @@
 #include "ConfigurationReader.hpp"
-#include "NodeConfiguration.hpp"
+#include "common/NodeConfiguration.hpp"
 #include <spdlog/spdlog.h>
 #include <yaml-cpp/yaml.h>
 
-std::optional<NodeConfiguration>
+std::optional<common::NodeConfiguration>
 ConfigurationReader::read(const std::string &configPath) {
-  NodeConfiguration nodeConfiguration;
+  common::NodeConfiguration nodeConfiguration;
   try {
     auto config = YAML::LoadFile(configPath);
 

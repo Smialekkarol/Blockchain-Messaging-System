@@ -1,9 +1,9 @@
 #pragma once
 
-#include "/root/node/src/itf/Header.hpp"
+#include "common/itf/Block.hpp"
 
 #include "Serializer.hpp"
 
 namespace serialization {
-using HeaderSerializer = Serializer<::itf::Header>;
+using BlockSerializer = Serializer<::common::itf::Block>;
 } // namespace serialization
