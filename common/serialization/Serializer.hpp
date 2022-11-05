@@ -13,7 +13,7 @@ public:
   Serializer() = default;
 
   std::string serialize(const Data &data) {
-    boost::archive::text_oarchive textOutputArchive{ss};
+    boost::archive::text_oarchive textOutputArchive{ss, boost::archive::archive_flags::no_header};
     ss.str("");
     textOutputArchive << data;
     return ss.str();
@@ -30,7 +30,7 @@ public:
     ss.str("");
     Data deserializedBlock{};
     ss.str(data);
-    boost::archive::text_iarchive inputTextArchive{ss};
+    boost::archive::text_iarchive inputTextArchive{ss, boost::archive::archive_flags::no_header};
     inputTextArchive >> deserializedBlock;
     return deserializedBlock;
   }

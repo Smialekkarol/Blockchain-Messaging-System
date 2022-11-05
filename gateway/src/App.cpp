@@ -1,4 +1,4 @@
-#include "WebSocketServer.hpp"
+#include "Gateway.hpp"
 
 int main() {
   auto const address = boost::asio::ip::make_address("127.0.0.1");

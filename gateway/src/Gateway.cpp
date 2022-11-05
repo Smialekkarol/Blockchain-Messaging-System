@@ -1,19 +1,21 @@
-#include "WebSocketServer.hpp"
+#include "Gateway.hpp"
 #include <boost/foreach.hpp>
 #include <boost/tokenizer.hpp>
 #include <string.h>
 
+#include "common/utils/Text.hpp"
 #include "common/ConnectionHandler.hpp"
 #include "common/NodeConfiguration.hpp"
+
 #include <amqpcpp.h>
 #include <amqpcpp/libev.h>
 #include <ev.h>
 
 typedef boost::tokenizer<boost::char_separator<char>> tokenizer;
 
-void websocket_connection::start() { read_request(); }
+void gatewayConnection::start() { read_request(); }
 
-void websocket_connection::read_request() {
+void gatewayConnection::read_request() {
   std::thread{[q{std::move(socket)}, this]() {
     beast::websocket::stream<tcp::socket> websocket{
         std::move(const_cast<tcp::socket &>(q))};
@@ -34,43 +36,51 @@ void websocket_connection::read_request() {
   }}.detach();
 }
 
-void websocket_connection::proccesRequestData(std::string data) const {
-  boost::char_separator<char> sep(";");
-  boost::char_separator<char> at("@");
+void gatewayConnection::proccesRequestData(std::string data) const {
 
+  serialization::HeaderSerializer headerSerializer;
+
+  std::vector<std::string> dataAttributes;  
+  boost::char_separator<char> at("@");
   tokenizer dataTokens(data, at);
-  std::vector<std::string> dataAttributes;
+
   BOOST_FOREACH (std::string const &token, dataTokens) {
     dataAttributes.push_back(token);
   }
 
+  //  std::vector<std::string> dataAttributes = common::utils::Text::splitBySeparator(data, "@"); cos cmake nie chce wyszukac tego
+
   auto header = dataAttributes[0];
-  auto message = dataAttributes[1];
+  auto rawMessage = dataAttributes[1];
 
-  tokenizer headerTokens(header, sep);
-  std::vector<std::string> headerAttributes;
-  BOOST_FOREACH (std::string const &token, headerTokens) {
-    headerAttributes.push_back(token);
-  }
+  auto headerObject = headerSerializer.deserialize(header);
 
-  auto target = headerAttributes[0];
-  auto nodeName = headerAttributes[1];
-  auto queName = headerAttributes[2];
+
+  auto target = headerObject.target;
+  auto serverName = headerObject.serverName;
+  auto queName = headerObject.queName;
+
+
+
+  std::cout<<"target "<<target<<std::endl;
+  std::cout<<"serverName "<<serverName<<std::endl;
+  std::cout<<"queName "<<queName<<std::endl;
 
   if (target == "CreateChannel") {
-    this->SendMessage("amqp://localhost/", nodeName, queName, message);
+    auto message = target + "@" + rawMessage;
+    this->SendMessage("amqp://localhost/", serverName, queName, message);
     std::cout << "CreateChannel request received\n";
   }
   if (target == "Send") {
-    this->SendMessage("amqp://localhost/", nodeName, queName, message);
-    std::cout << "Send request received\n" << nodeName;
+    this->SendMessage("amqp://localhost/", serverName, queName, rawMessage);
+    std::cout << "Send request received\n";
   }
-  if (target == "GetData") {
+  if (target == "GetHistory") {
     std::cout << "GetData request received\n";
   }
 }
 
-void websocket_connection::SendMessage(std::string nodeAddress,
+void gatewayConnection::SendMessage(std::string nodeAddress,
                                        std::string nodeName,
                                        std::string queName,
                                        std::string message) const {
@@ -84,7 +94,7 @@ void websocket_connection::SendMessage(std::string nodeAddress,
   channel.onError([](const char *message) {
     std::cout << "Channel error: " << message << std::endl;
   });
-  std::cout << "message sent on " << queName << std::endl;
+
   channel.declareQueue(queName, AMQP::durable)
       .onSuccess([&connection, &channel, &node,
                   &message](const std::string &name, uint32_t messagecount,
@@ -96,10 +106,10 @@ void websocket_connection::SendMessage(std::string nodeAddress,
   ev_run(loop, 0);
 }
 
-void websocket_server(tcp::acceptor &acceptor, tcp::socket &socket) {
+void gatewayServer(tcp::acceptor &acceptor, tcp::socket &socket) {
   acceptor.async_accept(socket, [&](beast::error_code ec) {
     if (!ec)
-      std::make_shared<websocket_connection>(std::move(socket))->start();
-    websocket_server(acceptor, socket);
+      std::make_shared<gatewayConnection>(std::move(socket))->start();
+    gatewayServer(acceptor, socket);
   });
 }

@@ -6,6 +6,10 @@
 #include <ev.h>
 #include <gsl/gsl>
 
+#include <boost/foreach.hpp>
+#include <boost/tokenizer.hpp>
+#include "common/serialization/MessageSerializer.hpp"
+
 class Consumer {
 public:
   Consumer(const common::NodeConfiguration &config);
@@ -24,6 +28,6 @@ private:
   AMQP::TcpChannel channel;
 
   void run();
-  void handleControlMessage(const gsl::span<std::string> &command);
-  void createChannel(const gsl::span<std::string> &command);
+  void handleControlMessage(const std::string &command);
+  void createChannel(const std::string &command);
 };

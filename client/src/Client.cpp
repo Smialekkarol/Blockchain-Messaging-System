@@ -4,21 +4,19 @@ int Client::MakeInitialConnection(std::string host, char *port,
                                   std::string queToBeCreated) {
   try {
     std::string queName = nodeName + "_ControlChannel";
-    std::string header = "CreateChannel;" + nodeName + ";" + queName;
 
-    // itf::Header header("CreateChannel", nodeName, queName);
+    common::itf::Header header("CreateChannel", nodeName, queName);
     common::itf::Message message(common::utils::Timestamp::get(),
                                  queToBeCreated, clientName);
 
     serialization::MessageSerializer messageSerializer;
-    // serialization::HeaderSerializer headerSerializer;
+    serialization::HeaderSerializer headerSerializer;
 
-    // std::string data = headerSerializer.serialize(header); + "@" +
-    // messageSerializer.serialize(message) + "\n";
-    std::string data =
-        header + "@" + messageSerializer.serialize(message) + "\n";
+    auto data = headerSerializer.serialize(header) + "@" +
+    messageSerializer.serialize(message) + "\n";
 
-    return this->WebSocketConnection(host, port, data);
+    return this->WebSocketConnection(host, port, data.c_str());
+
   } catch (std::exception const &e) {
     std::cerr << "Error: " << e.what() << std::endl;
     return EXIT_FAILURE;
@@ -30,19 +28,17 @@ int Client::SendMessage(std::string host, char *port, std::string queName,
                         std::string dataToSend) {
   try {
     serialization::MessageSerializer messageSerializer;
-    // serialization::HeaderSerializer headerSerializer;
+    serialization::HeaderSerializer headerSerializer;
 
-    std::string header = "Send;" + nodeName + ";" + queName;
-    // itf::Header header("Send", nodeName, queName);
+    common::itf::Header header("Send", nodeName, queName);
     common::itf::Message message(common::utils::Timestamp::get(), dataToSend,
                                  clientName);
 
-    std::string data =
-        header + "@" + messageSerializer.serialize(message) + "\n";
-    // std::string data = headerSerializer.serialize(header); + "@" +
-    // messageSerializer.serialize(message) + "\n";
+    std::string data = headerSerializer.serialize(header) + "@" +
+    messageSerializer.serialize(message) + "\n";
 
     return this->WebSocketConnection(host, port, data);
+
   } catch (std::exception const &e) {
     std::cerr << "Error: " << e.what() << std::endl;
     return EXIT_FAILURE;
@@ -54,17 +50,14 @@ int Client::getData(std::string host, char *port, std::string queName,
                     std::string RequestData) {
   try {
     serialization::MessageSerializer messageSerializer;
-    // serialization::HeaderSerializer headerSerializer;
+    serialization::HeaderSerializer headerSerializer;
 
-    std::string header = "GetData;" + nodeName + ";" + queName;
-    // itf::Header header("GetData", nodeName, queName);
+    common::itf::Header header("GetHistory", nodeName, queName);
     common::itf::Message message(common::utils::Timestamp::get(), RequestData,
                                  clientName);
 
-    std::string data =
-        header + "@" + messageSerializer.serialize(message) + "\n";
-    // std::string data = headerSerializer.serialize(header); + "@" +
-    // messageSerializer.serialize(message) + "\n";
+    std::string data = headerSerializer.serialize(header); + "@" +
+    messageSerializer.serialize(message) + "\n";
     return this->WebSocketConnection(host, port, data);
 
   } catch (std::exception const &e) {
