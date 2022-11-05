@@ -9,17 +9,18 @@
 #include <iostream>
 #include <string>
 #include <thread>
+#include "common/serialization/HeaderSerializer.hpp"
 
 namespace beast = boost::beast; // from <boost/beast.hpp>
 namespace http = beast::http; // from <boost/beast/http.hpp>
 namespace net = boost::asio; // from <boost/asio.hpp>
 using tcp = net::ip::tcp; // from <boost/asio/ip/tcp.hpp>
 
-void websocket_server(tcp::acceptor& acceptor, tcp::socket& socket);
+void gatewayServer(tcp::acceptor& acceptor, tcp::socket& socket);
 
-class websocket_connection : public std::enable_shared_from_this<websocket_connection> {
+class gatewayConnection : public std::enable_shared_from_this<gatewayConnection> {
 public:
-    websocket_connection(tcp::socket socket)
+    gatewayConnection(tcp::socket socket)
         : socket(std::move(socket))
     {
     }

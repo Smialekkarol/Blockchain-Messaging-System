@@ -1,4 +1,4 @@
-#include "WebSocketServer.hpp"
+#include "Gateway.hpp"
 
 int main() {
   auto const address = boost::asio::ip::make_address("127.0.0.1");
@@ -7,7 +7,7 @@ int main() {
   net::io_context ioc{1};
   tcp::acceptor acceptor{ioc, {address, port}};
   tcp::socket socket{ioc};
-  websocket_server(acceptor, socket);
+  gatewayServer(acceptor, socket);
 
   ioc.run();
 }
