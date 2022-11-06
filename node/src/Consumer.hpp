@@ -4,7 +4,6 @@
 #include "common/NodeConfiguration.hpp"
 #include <amqpcpp.h>
 #include <ev.h>
-#include <gsl/gsl>
 
 #include <boost/foreach.hpp>
 #include <boost/tokenizer.hpp>

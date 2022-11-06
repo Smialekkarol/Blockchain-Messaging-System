@@ -5,4 +5,5 @@ set(ITF_SOURCES
   ${ITF_DIR}/Header.cpp
 )
 
+target_include_directories(common PUBLIC .)
 target_sources(common PUBLIC ${ITF_SOURCES})

@@ -1,7 +1,10 @@
 #include <gtest/gtest.h>
 #include <memory>
 
-#include "ConfigurationReader.cpp"
+#include "common/NodeConfiguration.hpp"
+
+#include "../ConfigurationReader.hpp"
+
 
 class TestConfigurationReader : public ::testing::Test {
 public:
@@ -11,7 +14,7 @@ public:
 };
 
 TEST_F(TestConfigurationReader, testReadValidConfiguration) {
-  const auto &config{std::string(RESOURCES_ROOT) + "validConfig.yaml"};
+  const auto &config{"mocks/validConfig.yaml"};
   auto parsedConfig = sut->read(config);
 
   ASSERT_TRUE(parsedConfig.has_value());
@@ -29,7 +32,7 @@ TEST_F(TestConfigurationReader, testReadValidConfiguration) {
 }
 
 TEST_F(TestConfigurationReader, testReadMissingEntry) {
-  const auto &config{std::string(RESOURCES_ROOT) + "missingEntry.yaml"};
+  const auto &config{"mocks/missingEntry.yaml"};
   auto parsedConfig = sut->read(config);
 
   EXPECT_FALSE(parsedConfig.has_value());

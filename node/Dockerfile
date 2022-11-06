@@ -139,6 +139,19 @@ RUN cd /home && git clone git@github.com:enki/libev.git \
   && cd .. \
   && rm -rf libev
 
+RUN cd /home && wget https://github.com/microsoft/GSL/archive/refs/tags/v4.0.0.tar.gz \
+  && tar -xzvf v4.0.0.tar.gz \
+  && rm -rf v4.0.0.tar.gz \
+  && cd GSL-4.0.0 \
+  && cmake -S . -B build \
+  && cd build \
+  && make \
+  && make -j $(nproc) install \
+  && make clean \
+  && ldconfig \
+  && cd ../.. \
+  && rm -rf GSL-4.0.0
+
 COPY install_rabbitmq.sh /home/install_rabbitmq.sh
 RUN /home/install_rabbitmq.sh
 

@@ -16,10 +16,10 @@ find_package(yaml-cpp REQUIRED)
 find_package(spdlog REQUIRED)
 
 find_path(HIREDIS_HEADER hiredis REQUIRED)
-target_include_directories(node PUBLIC ${HIREDIS_HEADER})
+target_include_directories(node PRIVATE ${HIREDIS_HEADER})
 
 find_library(HIREDIS_LIB hiredis REQUIRED)
-target_link_libraries(node PUBLIC ${HIREDIS_LIB})
+target_link_libraries(node PRIVATE ${HIREDIS_LIB})
 
 find_path(REDIS_PLUS_PLUS_HEADER sw REQUIRED)
 target_include_directories(node PRIVATE ${REDIS_PLUS_PLUS_HEADER})
@@ -33,12 +33,8 @@ if(Boost_FOUND)
   target_link_libraries(node PRIVATE ${Boost_LIBRARIES})
 endif()
 
-add_ut(TestConfigurationReader
-  SRC ut/TestConfigurationReader.cpp
-  LIB ${YAML_CPP_LIBRARIES} spdlog::spdlog
-)
-
 target_link_libraries(node PRIVATE common amqpcpp Threads::Threads ${LIBEV_LIBRARIES} ${YAML_CPP_LIBRARIES} spdlog::spdlog)
-target_include_directories(node PUBLIC .)
+target_include_directories(node PRIVATE .)
 
 add_subdirectory(db)
+add_subdirectory(ut)
