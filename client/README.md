@@ -1,35 +1,15 @@
-# blockchain protocol
+# How to build
+Change directory to the Blockchain-Private.
 
-Node
--Should encrypt data on send to node
--Should decrypt data received from node
--Should have buffer which handles receive and send of big data
--Should have mehchanism to retry on failure.
--Should have broadcast mechanism to propagate new block to other nodes
--Should have consensus mechanism to resolve which of the block is the newest
--Should handle consistency of messages. For instance should handle order of send and received messages.
--Should have buffer for messages
--Should have endpoint to create new blockhain
+rm -rf build &> /dev/null
+cmake -S . -B build -DBUILD_CLIENT=ON
+cmake --build build -j $(nproc)
 
--Consensus mechanism is based on timestamp
--Consensus mechanism should come to consensus by communicating with multiple validators
--We do not override past after confiration of validation
--All nodes handling given blockchain in given time stamp must validate each other
--Nodes choose randomly one validator between each other. Sends to him all data. The chosen validator sorts entries by timestamp.
-After sorting it boradcast data to connected nodes.
-After broadcasting to nodes in given blockchain. The blockchain is propagated to ohter nodes in protocol.
+# How to run
+Change directory to the Blockchain-Private.
 
-Gateway
--Is used only by the client. Nodes communicates direcetly between each other
--Should encrypt data on send to node
--Should decrypt data received from node
--Should have buffer which handles receive and send of big data
--Should have mehchanism to retry on failure on timeout. For instance retry 3 times then propagate error.
--Should forward error to client
--Should have buffer for messages
+./build/client/src/user 127.0.0.1 8080 NodeA
 
-
-testowanie?
-integracja wiadomosci
-polaczenie z siecia globalna
- 
+First argument is a address of gateway
+Second argument is port of gateway
+Third argument is ID of the Node

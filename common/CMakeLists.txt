@@ -5,7 +5,7 @@ set(COMMON_SOURCES
 
 add_library(common ${COMMON_SOURCES})
 
-target_include_directories(common PUBLIC "${REPO_ROOT_DIR}")
+target_include_directories(common PUBLIC .)
 
 add_subdirectory(utils)
 add_subdirectory(itf)
