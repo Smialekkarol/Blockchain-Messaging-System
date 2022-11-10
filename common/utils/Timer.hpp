@@ -1,13 +1,22 @@
 #include <atomic>
 #include <chrono>
 #include <iostream>
+#include <stdexcept>
 #include <thread>
 
-template <typename Callback> class Timer {
+namespace common::utils {
+class Timer {
+  class SetTimeoutAlreadyActive : public std::exception {};
+  class SetIntervalAlreadyActive : public std::exception {};
+
 public:
-  void setTimeout(Callback callback, int delay) {
-    active = true;
-    std::thread t([&]() {
+  template <typename Callback>
+  void setTimeout(Callback callback, const int delay) {
+    if (active) {
+      throw SetTimeoutAlreadyActive{};
+    }
+    active.store(true);
+    std::thread t([=]() {
       if (!active.load()) {
         return;
       }
@@ -20,9 +29,13 @@ public:
     t.detach();
   }
 
-  void setInterval(Callback callback, int interval) {
-    active = true;
-    std::thread t([&]() {
+  template <typename Callback>
+  void setInterval(Callback callback, const int interval) {
+    if (active) {
+      throw SetIntervalAlreadyActive{};
+    }
+    active.store(true);
+    std::thread t([=]() {
       while (active.load()) {
         std::this_thread::sleep_for(std::chrono::milliseconds(interval));
         if (!active.load()) {
@@ -34,8 +47,9 @@ public:
     t.detach();
   }
 
-  void stop() { active = false; }
+  void stop() { active.store(false); }
 
 private:
   std::atomic<bool> active{false};
 };
+} // namespace common::utils
