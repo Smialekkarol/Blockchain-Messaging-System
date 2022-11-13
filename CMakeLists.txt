@@ -22,8 +22,9 @@ option(BUILD_CLIENT "Enable client build" OFF)
 
 set(REPO_ROOT_DIR "${CMAKE_CURRENT_SOURCE_DIR}")
 
-add_subdirectory(common)
 include_directories(.)
+
+add_subdirectory(common)
 
 if(BUILD_NODE OR BUILD_ALL_COMPONENTS)
   add_subdirectory(node)
