@@ -6,3 +6,5 @@ set(UTILS_SOURCES
 
 target_include_directories(common PUBLIC .)
 target_sources(common PUBLIC ${UTILS_SOURCES})
+
+add_subdirectory(ut)
