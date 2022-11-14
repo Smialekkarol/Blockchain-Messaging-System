@@ -8,6 +8,8 @@
 #include <functional>
 #include <gtest/gtest.h>
 
+namespace common::utils {
+
 class TimerMock {
 public:
   MOCK_METHOD(void, stop, (), ());
@@ -22,15 +24,17 @@ public:
 };
 
 template <>
-inline void TimerMock::setInterval<int>(std::function<void()> callback,
-                                        const int interval) {
-  return setIntervalVoid(callback, interval);
+inline void
+TimerMock::setInterval<std::function<void()>>(std::function<void()> callback,
+                                              const int interval) {
+  setIntervalVoid(callback, interval);
 }
 
 template <>
-inline void TimerMock::setTimeout<int>(std::function<void()> callback,
-                                       const int delay) {
-  return setTimeoutVoid(callback, delay);
+inline void
+TimerMock::setTimeout<std::function<void()>>(std::function<void()> callback,
+                                             const int delay) {
+  setTimeoutVoid(callback, delay);
 }
 
 STATIC_MOCK_CLASS(TimerConstructor) {
@@ -41,10 +45,15 @@ public:
 class MOCK_FACADE(Timer) : public ::testing::MockBase<TimerMock> {
 public:
   Timer() { this->setMock(STATIC_MOCK(TimerConstructor).construct()); }
+  Timer(const Timer &other) = delete;
+  Timer(Timer &&other) = delete;
+  Timer &operator=(const Timer &other) = delete;
+  Timer &operator=(Timer &&other) = delete;
 
-  WRAP_METHOD_TEMPLATE(setInterval);
-  WRAP_METHOD_TEMPLATE(setTimeout);
+  WRAP_METHOD_TEMPLATE(setInterval, std::function<void()>);
+  WRAP_METHOD_TEMPLATE(setTimeout, std::function<void()>);
   WRAP_METHOD(stop);
 };
+} // namespace common::utils
 
 #endif
