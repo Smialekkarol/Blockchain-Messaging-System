@@ -5,6 +5,7 @@ set(NODE_SOURCES
   ${NODE_DIR}/Producer.cpp
   ${NODE_DIR}/Utils.cpp
   ${NODE_DIR}/ConfigurationReader.cpp
+  # ${NODE_DIR}/Buffer.cpp
 )
 
 add_executable(node ${NODE_SOURCES})
@@ -37,4 +38,5 @@ target_link_libraries(node PRIVATE common amqpcpp Threads::Threads ${LIBEV_LIBRA
 target_include_directories(node PRIVATE .)
 
 add_subdirectory(db)
+add_subdirectory(slot)
 add_subdirectory(ut)

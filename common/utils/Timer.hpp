@@ -1,8 +1,10 @@
 #pragma once
 
+// clang-format off
 #include <static_mock/Mock.hpp>
 #include INCLUDE_TESTABLE_MOCK("ut/mocks/TimerMock.hpp")
 #if USE_ORIGINAL_CLASS(Timer)
+// clang-format on
 
 #include <atomic>
 #include <chrono>
