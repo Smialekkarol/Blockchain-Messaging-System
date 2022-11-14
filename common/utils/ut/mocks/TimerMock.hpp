@@ -9,7 +9,6 @@
 #include <gtest/gtest.h>
 
 namespace common::utils {
-
 class TimerMock {
 public:
   MOCK_METHOD(void, stop, (), ());
@@ -35,7 +34,6 @@ inline void
 TimerMock::setTimeout<std::function<void()>>(std::function<void()> callback,
                                              const int delay) {
   setTimeoutVoid(callback, delay);
-}
 
 STATIC_MOCK_CLASS(TimerConstructor) {
 public:
