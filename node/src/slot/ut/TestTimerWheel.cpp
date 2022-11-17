@@ -14,10 +14,7 @@ public:
     timerWheel = std::make_shared<::slot::TimerWheel>();
   }
 
-  void TearDown() {
-    EXPECT_CALL(*timerMock, stop()).Times(1);
-    timerWheel->stop();
-  }
+  void TearDown() { EXPECT_CALL(*timerMock, stop()).Times(1); }
 
   void callTimes(std::function<void()> callback, const int iterations) {
     for (int i = 0; i < iterations; i++) {
@@ -25,8 +22,8 @@ public:
     }
   }
 
-  std::shared_ptr<::common::utils::TimerMock> timerMock;
-  std::shared_ptr<::slot::TimerWheel> timerWheel;
+  std::shared_ptr<::common::utils::TimerMock> timerMock{};
+  std::shared_ptr<::slot::TimerWheel> timerWheel{};
 };
 
 TEST_F(TestTimerWheel, shouldCallTwoCallbacksForTwoSlots) {
@@ -43,7 +40,7 @@ TEST_F(TestTimerWheel, shouldCallTwoCallbacksForTwoSlots) {
   EXPECT_EQ(counter, 4);
 }
 
-TEST_F(TestTimerWheel, shouldUnsubscribeOneSubscriptionSuccessfully) {
+TEST_F(TestTimerWheel, shouldUnsubscribeOneSubscription) {
   int counter{0};
   std::function<void()> capturedCallback{nullptr};
   EXPECT_CALL(*timerMock, setIntervalVoid(_, 500))
