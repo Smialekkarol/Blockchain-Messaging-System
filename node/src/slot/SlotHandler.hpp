@@ -1,34 +1,28 @@
 #pragma once
 
+#include <functional>
+#include <vector>
+
 #include "db/RedisDB.hpp"
 #include "node/src/Buffer.hpp"
 
 namespace slot {
 class SlotHandler {
 public:
-  SlotHandler(::db::RedisDB &redis_, Buffer &buffer_)
-      : redis{redis_}, buffer{buffer_} {}
+  SlotHandler(::db::RedisDB &redis_, Buffer &buffer_);
 
-  void handle() {
-    savePendingBlock();
-    saveCompleteBlock();
-  }
+  void handle();
 
 private:
-  void savePendingBlock() {
-    buffer.save();
-    block = buffer.pop();
-    blockIndex = redis.add(block, "default");
-  };
-
-  void saveCompleteBlock() {
-    block.state = ::common::itf::BlockState::COMPLETED;
-    redis.update(block, blockIndex, "default");
-  }
+  void savePendingBlock();
+  void saveCompleteBlock();
 
   ::db::RedisDB &redis;
   Buffer &buffer;
   long long blockIndex{0};
   ::common::itf::Block block{};
+  bool shouldCallNextHandler{true};
+  std::vector<std::function<void()>> handlers{
+      [this]() { savePendingBlock(); }, [this]() { saveCompleteBlock(); }};
 };
 } // namespace slot

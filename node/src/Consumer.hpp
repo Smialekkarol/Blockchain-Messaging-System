@@ -2,12 +2,13 @@
 
 #include "common/ConnectionHandler.hpp"
 #include "common/NodeConfiguration.hpp"
+#include "common/serialization/MessageSerializer.hpp"
+
 #include <amqpcpp.h>
 #include <ev.h>
 
 #include <boost/foreach.hpp>
 #include <boost/tokenizer.hpp>
-#include "common/serialization/MessageSerializer.hpp"
 
 class Consumer {
 public:

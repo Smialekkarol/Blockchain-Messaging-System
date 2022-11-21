@@ -1,6 +1,6 @@
-#include <algorithm>
-
 #include "RedisDB.hpp"
+
+#include <algorithm>
 
 namespace db {
 RedisDB::RedisDB() : redis{"tcp://127.0.0.1:6379"} {}

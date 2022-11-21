@@ -1,13 +1,14 @@
 #pragma once
 
+// clang-format off
+#include <static_mock/Mock.hpp>
+#include INCLUDE_TESTABLE_MOCK("ut/mocks/RedisDBMock.hpp")
+#if USE_ORIGINAL_CLASS(RedisDB)
+// clang-format on
+
 #include <mutex>
-#include <sstream>
 
 #include <sw/redis++/redis++.h>
-
-#include <boost/archive/text_iarchive.hpp>
-#include <boost/archive/text_oarchive.hpp>
-#include <boost/serialization/vector.hpp>
 
 #include "common/itf/Block.hpp"
 
@@ -35,3 +36,4 @@ private:
   std::mutex mutex{};
 };
 } // namespace db
+#endif

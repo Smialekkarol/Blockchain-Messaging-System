@@ -6,7 +6,9 @@
 #if USE_ORIGINAL_CLASS(TimerWheel)
 // clang-format on
 
+#include "common/utils/Time.hpp"
 #include "common/utils/Timer.hpp"
+
 #include <algorithm>
 #include <functional>
 #include <memory>
@@ -70,6 +72,8 @@ public:
   ~TimerWheel() { stop(); };
 
   void start() {
+    std::this_thread::sleep_for(std::chrono::milliseconds(
+        ::common::utils::Time::getTimeToTheNearestSlot() + 1));
     timer.setInterval(
         [&]() {
           std::scoped_lock lock(mutex);

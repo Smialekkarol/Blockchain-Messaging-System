@@ -1,4 +1,5 @@
 #!/bin/bash
+
 component="-DBUILD_ALL_COMPONENTS=ON"
 ut=""
 build_only=false
@@ -24,7 +25,7 @@ while [[ $# -gt 0 ]]; do
         shift
         ;;
     --ut)
-        component="-DENABLE_UNIT_TESTS=ON"
+        ut="-DENABLE_UNIT_TESTS=ON"
         shift
         ;;
     --cmake_only)
@@ -47,21 +48,15 @@ while [[ $# -gt 0 ]]; do
 done
 
 if [[ "${clear}" = true ]]; then
-    echo "========================================="
-    echo "clear"
     rm -rf build &> /dev/null
 fi
 
 if [[ "${cmake_only}" = true ]]; then
-    echo "========================================="
-    echo "cmake_only"
     cmake -S . -B build -DBUILD_ALL_COMPONENTS=ON -DENABLE_UNIT_TESTS=ON
     exit 0
 fi
 
 if [[ "${build_only}" = true ]]; then
-    echo "========================================="
-    echo "build_only"
     cmake --build build -j $(nproc)
     exit 0
 fi

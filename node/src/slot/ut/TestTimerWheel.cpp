@@ -1,5 +1,7 @@
 #include <gtest/gtest.h>
+
 #include <memory>
+#include <thread>
 
 #include "../TimerWheel.hpp"
 
@@ -7,10 +9,15 @@ namespace testing {
 class TestTimerWheel : public ::testing::Test {
 public:
   void SetUp() {
+    EXPECT_CALL(STATIC_MOCK(::common::utils::TimeMock),
+                getTimeToTheNearestSlot())
+        .WillRepeatedly(Return(0));
+
     timerMock = std::make_shared<::common::utils::TimerMock>();
     EXPECT_CALL(STATIC_MOCK(::common::utils::TimerConstructor), construct())
         .Times(1)
         .WillRepeatedly(Return(timerMock));
+
     timerWheel = std::make_shared<::slot::TimerWheel>();
   }
 

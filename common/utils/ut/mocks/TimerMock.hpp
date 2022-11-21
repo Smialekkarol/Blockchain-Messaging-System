@@ -34,6 +34,7 @@ inline void
 TimerMock::setTimeout<std::function<void()>>(std::function<void()> callback,
                                              const int delay) {
   setTimeoutVoid(callback, delay);
+}
 
 STATIC_MOCK_CLASS(TimerConstructor) {
 public:

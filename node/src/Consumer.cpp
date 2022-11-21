@@ -47,19 +47,17 @@ void Consumer::handleControlMessage(const std::string &data) {
 
   serialization::MessageSerializer messageSerializer;
 
-  common::itf::Message message = messageSerializer.deserialize(serializedMessage);
+  common::itf::Message message =
+      messageSerializer.deserialize(serializedMessage);
 
-  std::cout<<"target "<<target<<std::endl;
-  std::cout<<"message.data "<<message.data<<std::endl;
+  std::cout << "target " << target << std::endl;
+  std::cout << "message.data " << message.data << std::endl;
 
   if (target == "CreateChannel") {
     createChannel(message.data);
-  } 
-  else if (target == "Send"){
-    std::cout<<message.data<<std::endl;
-  }
-  else if (target == "history") {
-    //
+  } else if (target == "Send") {
+    std::cout << message.data << std::endl;
+  } else if (target == "history") {
   } else {
     spdlog::error("Invalid command");
   }
@@ -74,7 +72,8 @@ void Consumer::createChannel(const std::string &channelToBeCreated) {
       .onReceived([&channelToBeCreated](const AMQP::Message &msg, uint64_t tag,
                                         bool redelivered) {
         serialization::MessageSerializer messageSerializer;
-        common::itf::Message messageObject = messageSerializer.deserialize(msg.body());
+        common::itf::Message messageObject =
+            messageSerializer.deserialize(msg.body());
         spdlog::debug(messageObject.author + ": " + messageObject.data + "\n");
       });
 }

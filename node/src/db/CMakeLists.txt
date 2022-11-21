@@ -7,3 +7,5 @@ if(NOT ENABLE_UNIT_TESTS)
     target_include_directories(node PRIVATE .)
     target_sources(node PRIVATE ${DB_SOURCES})
 endif()
+
+add_subdirectory(ut)

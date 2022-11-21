@@ -33,6 +33,8 @@ if(NOT ENABLE_UNIT_TESTS)
   target_include_directories(node PRIVATE .)
 endif()
 
+include_directories(.)
+
 add_subdirectory(db)
 add_subdirectory(slot)
 add_subdirectory(ut)

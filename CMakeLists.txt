@@ -24,6 +24,10 @@ set(REPO_ROOT_DIR "${CMAKE_CURRENT_SOURCE_DIR}")
 
 include_directories(.)
 
+# TODO itf must be moved from common to separate library as
+# data structures should not be mocked and should not depend on mocks
+# currently Block depends on common functionalities which will be troublesome
+# in near future
 add_subdirectory(common)
 
 if(BUILD_NODE OR BUILD_ALL_COMPONENTS)
