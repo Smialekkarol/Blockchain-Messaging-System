@@ -18,6 +18,7 @@
 #include "common/serialization/HeaderSerializer.hpp"
 #include "common/serialization/MessageSerializer.hpp"
 #include "common/Buffer.hpp"
+#include "common/NodeConfiguration.hpp"
 
 //refactor klasy
 

@@ -6,7 +6,6 @@
 #include "GatewayAsync.hpp"
 #include "common/ConnectionHandler.hpp"
 #include "common/utils/Text.hpp"
-#include "NodeCommunicationHandler.hpp"
 #include "common/utils/Timer.hpp"
 
 namespace gateway {
@@ -66,7 +65,6 @@ void Session::onRead(beast::error_code ec, std::size_t bytes_transferred)
   std::string bufferedData = beast::buffers_to_string(buffer.cdata());
   proccesRequestData(bufferedData);
   auto callable = [&]() {
-    std::cout<<"timer buffer size "<<messageBuffer.getSize()<<std::endl;
                 std::string serializedData;
                 if (messageBuffer.getSize() > 0) {
                     for (auto msg : messageBuffer.getBufferedData()) {
@@ -162,7 +160,6 @@ void Session::SendMessageToNode(std::string nodeAddress,
         for (auto x = 0; x < data.size() - 1; x++) {
           common::itf::Message messageObject = messageSerializer.deserialize(data[x]);
             messageBuffer.addMessage(data[x]);
-            std::cout<<"buffer size "<<messageBuffer.getSize()<<std::endl;
             dataToSend += data[x] + "@";
             
             std::cout << messageSerializer.deserialize(data[x]).author<<":"<<messageSerializer.deserialize(data[x]).data << std::endl;

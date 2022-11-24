@@ -3,7 +3,7 @@
 namespace client {
 
 WebsocketHandler::WebsocketHandler(net::io_context &ioc)
-    : resolver(ioc), websocket(ioc) {}
+    : resolver(net::make_strand(ioc)), websocket(net::make_strand(ioc)) {}
 
 WebsocketHandler::~WebsocketHandler() {
   websocket.close(websocket::close_code::normal);

@@ -16,7 +16,6 @@
 #include "common/serialization/MessageSerializer.hpp"
 #include "common/ConnectionHandler.hpp"
 
-#include "NodeCommunicationHandler.hpp"
 
 namespace gateway {
 
