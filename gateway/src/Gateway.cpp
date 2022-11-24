@@ -4,12 +4,8 @@
 #include <string.h>
 
 #include "common/utils/Text.hpp"
-#include "common/ConnectionHandler.hpp"
 #include "common/NodeConfiguration.hpp"
 
-#include <amqpcpp.h>
-#include <amqpcpp/libev.h>
-#include <ev.h>
 
 typedef boost::tokenizer<boost::char_separator<char>> tokenizer;
 
@@ -20,7 +16,7 @@ void gatewayConnection::read_request() {
     beast::websocket::stream<tcp::socket> websocket{
         std::move(const_cast<tcp::socket &>(q))};
     websocket.accept();
-    while (1) {
+    while (true) {
       try {
         beast::flat_buffer buffer;
         websocket.read(buffer);
@@ -48,34 +44,28 @@ void gatewayConnection::proccesRequestData(std::string data) const {
     dataAttributes.push_back(token);
   }
 
-  //  std::vector<std::string> dataAttributes = common::utils::Text::splitBySeparator(data, "@"); cos cmake nie chce wyszukac tego
+   std::vector<std::string> dataAttributess = common::utils::Text::splitBySeparator(data, "@");
 
   auto header = dataAttributes[0];
   auto rawMessage = dataAttributes[1];
-
   auto headerObject = headerSerializer.deserialize(header);
 
+  // std::cout<<"target "<<headerObject.target<<std::endl;
+  // std::cout<<"serverName "<<headerObject.serverName<<std::endl;
+  // std::cout<<"queName "<<headerObject.queName<<std::endl;
+  // std::cout<<"clientAddress "<<headerObject.clientAddress<<std::endl;
+  // std::cout<<std::endl;
 
-  auto target = headerObject.target;
-  auto serverName = headerObject.serverName;
-  auto queName = headerObject.queName;
-
-
-
-  std::cout<<"target "<<target<<std::endl;
-  std::cout<<"serverName "<<serverName<<std::endl;
-  std::cout<<"queName "<<queName<<std::endl;
-
-  if (target == "CreateChannel") {
-    auto message = target + "@" + rawMessage;
-    this->SendMessage("amqp://localhost/", serverName, queName, message);
+  if (headerObject.target == "CreateChannel") {
+    auto message = headerObject.target + "@" + rawMessage;
+    this->SendMessage("amqp://localhost/", headerObject.serverName, headerObject.queName, message);
     std::cout << "CreateChannel request received\n";
   }
-  if (target == "Send") {
-    this->SendMessage("amqp://localhost/", serverName, queName, rawMessage);
+  if (headerObject.target == "Send") {
+    this->SendMessage("amqp://localhost/", headerObject.serverName, headerObject.queName, rawMessage);
     std::cout << "Send request received\n";
   }
-  if (target == "GetHistory") {
+  if (headerObject.target == "GetHistory") {
     std::cout << "GetData request received\n";
   }
 }
@@ -103,6 +93,21 @@ void gatewayConnection::SendMessage(std::string nodeAddress,
       })
       .onError([](const char *message) { std::cout << message << "\n"; })
       .onFinalize([&connection]() { connection.close(); });
+
+  
+  channel.declareQueue("Client_ControlChannel", AMQP::durable)
+      .onSuccess([&connection, &channel, &node,
+                  &message](const std::string &name, uint32_t messagecount,
+                            uint32_t consumercount) {
+      })
+      .onError([](const char *message) { std::cout << message << "\n"; });
+
+  channel.consume("Client_ControlChannel", AMQP::noack)
+      .onReceived([](const AMQP::Message &msg, uint64_t tag,
+                                        bool redelivered) {
+        std::cout<<"message consumed "<<msg.body()<<"\nbody size "<<msg.bodySize()<<std::endl;
+      });
+
   ev_run(loop, 0);
 }
 

@@ -2,7 +2,8 @@ set(GATEWAY_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 set(GATEWAY_SOURCES 
   ${GATEWAY_DIR}/Gateway.cpp
   ${GATEWAY_DIR}/App.cpp
-  #../../common/utils/Text.cpp
+  ${GATEWAY_DIR}/GatewayAsync.cpp
+  ${GATEWAY_DIR}/Listener.cpp
 )
 
 add_executable(gateway ${GATEWAY_SOURCES})

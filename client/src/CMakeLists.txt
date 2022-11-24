@@ -3,6 +3,7 @@ set(USER_SOURCES
   ${USER_DIR}/Client.cpp
   ${USER_DIR}/App.cpp
   ${USER_DIR}/Utils.cpp
+  ${USER_DIR}/WebsocketHandler.cpp
 )
 
 add_executable(user ${USER_SOURCES})

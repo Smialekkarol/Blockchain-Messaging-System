@@ -1,21 +1,37 @@
 #include "Client.hpp"
 
-int Client::MakeInitialConnection(std::string host, char *port,
-                                  std::string queToBeCreated) {
-  try {
-    std::string queName = nodeName + "_ControlChannel";
+namespace client {
 
-    common::itf::Header header("CreateChannel", nodeName, queName);
+Client::Client(net::io_context &ioc, ClientInfo &clientInfo)
+    : clientInfo(clientInfo), websocketHandler((ioc)) {
+  websocketHandler.EstablishConnection(clientInfo);
+
+  auto callable = [ this]() {
+    Listen();
+    websocketHandler.clearBuffer();
+  };
+  Timer<std::function<void()>> timer;
+timer.setInterval(callable, 200);
+}
+
+Client::~Client() { std::cout << "~Client()\n"; }
+
+int Client::MakeInitialConnection(std::string queToBeCreated) {
+  try {
+    std::string queName = clientInfo.serverName + "_ControlChannel";
+
+    common::itf::Header header("CreateChannel", clientInfo.serverName, queName,
+                               clientInfo.clientName);
     common::itf::Message message(common::utils::Timestamp::get(),
-                                 queToBeCreated, clientName);
+                                 queToBeCreated, clientInfo.clientName);
 
     serialization::MessageSerializer messageSerializer;
     serialization::HeaderSerializer headerSerializer;
 
     auto data = headerSerializer.serialize(header) + "@" +
-    messageSerializer.serialize(message) + "\n";
+                messageSerializer.serialize(message) + "\n";
 
-    return this->WebSocketConnection(host, port, data.c_str());
+    websocketHandler.writeDataToWebsocket(data);
 
   } catch (std::exception const &e) {
     std::cerr << "Error: " << e.what() << std::endl;
@@ -24,21 +40,22 @@ int Client::MakeInitialConnection(std::string host, char *port,
   return 0;
 }
 
-int Client::SendMessage(std::string host, char *port, std::string queName,
-                        std::string dataToSend) {
+int Client::SendMessage(std::string queName, std::string dataToSend) {
   try {
     serialization::MessageSerializer messageSerializer;
     serialization::HeaderSerializer headerSerializer;
 
-    common::itf::Header header("Send", nodeName, queName);
+    common::itf::Header header("Send", clientInfo.serverName, queName,
+                               clientInfo.clientName);
     common::itf::Message message(common::utils::Timestamp::get(), dataToSend,
-                                 clientName);
+                                 clientInfo.clientName);
 
     std::string data = headerSerializer.serialize(header) + "@" +
-    messageSerializer.serialize(message) + "\n";
+                       messageSerializer.serialize(message) + "\n";
 
-    return this->WebSocketConnection(host, port, data);
+    websocketHandler.writeDataToWebsocket(data);
 
+    return EXIT_SUCCESS;
   } catch (std::exception const &e) {
     std::cerr << "Error: " << e.what() << std::endl;
     return EXIT_FAILURE;
@@ -46,19 +63,19 @@ int Client::SendMessage(std::string host, char *port, std::string queName,
   return 0;
 }
 
-int Client::getData(std::string host, char *port, std::string queName,
-                    std::string RequestData) {
+int Client::getData(std::string queName, std::string RequestData) {
   try {
     serialization::MessageSerializer messageSerializer;
     serialization::HeaderSerializer headerSerializer;
 
-    common::itf::Header header("GetHistory", nodeName, queName);
+    common::itf::Header header("GetHistory", clientInfo.serverName, queName,
+                               clientInfo.clientName);
     common::itf::Message message(common::utils::Timestamp::get(), RequestData,
-                                 clientName);
+                                 clientInfo.clientName);
 
-    std::string data = headerSerializer.serialize(header); + "@" +
-    messageSerializer.serialize(message) + "\n";
-    return this->WebSocketConnection(host, port, data);
+    std::string data = headerSerializer.serialize(header);
+    +"@" + messageSerializer.serialize(message) + "\n";
+    websocketHandler.writeDataToWebsocket(data);
 
   } catch (std::exception const &e) {
     std::cerr << "Error: " << e.what() << std::endl;
@@ -67,29 +84,18 @@ int Client::getData(std::string host, char *port, std::string queName,
   return 0;
 }
 
-int Client::WebSocketConnection(std::string host, char *port,
-                                std::string message) {
-  try {
-    auto const results = resolver.resolve(host, port);
-    auto ep = net::connect(webSocketStream.next_layer(), results);
-    host += ':' + std::to_string(ep.port());
-
-    webSocketStream.set_option(
-        websocket::stream_base::decorator([](websocket::request_type &req) {
-          req.set(http::field::user_agent,
-                  std::string(BOOST_BEAST_VERSION_STRING) +
-                      " websocket-client-coro");
-          req.target("Create");
-        }));
-
-    webSocketStream.handshake(host, "/");
-    webSocketStream.write(net::buffer(std::string(message)));
-    beast::flat_buffer buffer;
-    webSocketStream.read(buffer);
-    webSocketStream.close(websocket::close_code::normal);
-  } catch (std::exception const &e) {
-    std::cerr << "Error: " << e.what() << std::endl;
-    return EXIT_FAILURE;
+void Client::Listen() {
+  websocketHandler.readDataFromWebsocket();
+  std::vector<std::string> bufferedData = common::utils::Text::splitBySeparator(
+      websocketHandler.getBufferedData(), "@");
+      websocketHandler.clearBuffer();
+  serialization::MessageSerializer messageSerializer;
+  std::string serializedData{};
+  for (auto msg : bufferedData) {
+    auto messageObject = messageSerializer.deserialize(msg);
+    std::cout << messageObject.author + ": " + messageObject.data + "\n"
+              << std::endl;
   }
-  return 0;
+
+}
 }
