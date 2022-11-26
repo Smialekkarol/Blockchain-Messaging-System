@@ -1,6 +1,6 @@
-#include <algorithm>
-
 #include "RedisDB.hpp"
+
+#include <algorithm>
 
 namespace db {
 RedisDB::RedisDB() : redis{"tcp://127.0.0.1:6379"} {}
@@ -8,17 +8,29 @@ RedisDB::RedisDB() : redis{"tcp://127.0.0.1:6379"} {}
 RedisDB::RedisDB(const std::string &redisServerAddress)
     : redis{redisServerAddress} {}
 
-void RedisDB::add(const ::itf::Block &block, const std::string &blockchain) {
+long long RedisDB::add(const ::common::itf::Block &block,
+                       const std::string &blockchain) {
+  std::scoped_lock lock(mutex);
   std::vector<std::string> serializedBlock = {blockSerializer.serialize(block)};
-  redis.rpush(blockchain, serializedBlock.begin(), serializedBlock.end());
-  redis.save();
+  return redis.rpush(blockchain, serializedBlock.begin(),
+                     serializedBlock.end());
 }
 
-std::vector<::itf::Block> RedisDB::get(const std::string &blockchain,
-                                       const int numberOfBlocks = 1) {
+void RedisDB::update(const ::common::itf::Block &block, const long long index,
+                     const std::string &blockchain) {
+  std::scoped_lock lock(mutex);
+  std::string serializedBlock = {blockSerializer.serialize(block)};
+  redis.lset(blockchain, index, serializedBlock);
+}
+
+std::vector<::common::itf::Block> RedisDB::get(const std::string &blockchain,
+                                               const int numberOfBlocks) {
+  std::scoped_lock lock(mutex);
   std::vector<std::string> serializedBlocks{};
   redis.lrange(blockchain, -1 * numberOfBlocks, -1,
                std::back_inserter(serializedBlocks));
   return blockSerializer.deserialize(serializedBlocks);
 }
+
+void RedisDB::save() { redis.save(); }
 } // namespace db

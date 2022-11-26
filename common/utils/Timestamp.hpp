@@ -2,6 +2,7 @@
 
 #include <cstdint>
 
+// TODO this class needs to be removed and Time class will be used instead
 namespace common::utils {
 class Timestamp {
 public:

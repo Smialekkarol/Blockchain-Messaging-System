@@ -7,15 +7,14 @@
 #include "gmock/gmock.h"
 #include <functional>
 #include <gtest/gtest.h>
-#include <iostream>
 
 namespace slot {
 
 class TimerWheelMock {
 public:
+  MOCK_METHOD(void, start, (), ());
   MOCK_METHOD(void, stop, (), ());
-  MOCK_METHOD(void, stop, (), ());
-  MOCK_METHOD(void, Subscription, (std::function<void()>), ());
+  MOCK_METHOD(void, subscribe, (std::function<void()>), ());
 };
 
 STATIC_MOCK_CLASS(TimerWheelConstructor) {

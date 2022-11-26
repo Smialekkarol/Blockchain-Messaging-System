@@ -1,14 +1,20 @@
-#include "utils/Timestamp.hpp"
+#include "utils/Time.hpp"
 
 #include "Block.hpp"
 
-#include <boost/archive/text_iarchive.hpp>
-#include <boost/archive/text_oarchive.hpp>
-
 namespace common::itf {
 Block::Block() = default;
-Block::Block(const std::vector<Message> &data)
-    : timestamp{::common::utils::Timestamp::get()}, data{data} {}
-Block::Block(const uint64_t timestamp, const std::vector<Message> &data)
-    : timestamp{timestamp}, data{data} {}
+
+Block::Block(const std::vector<Message> &data_)
+    : timestamp{::common::utils::Time::getTimeStamp()},
+      slot{::common::utils::Time::getSlot(timestamp)}, data{data_} {}
+
+Block::Block(const uint64_t timestamp_, const std::vector<Message> &data_)
+    : timestamp{timestamp_}, slot{::common::utils::Time::getSlot(timestamp)},
+      data{data_} {}
+
+bool Block::operator==(const Block &other) const {
+  return other.timestamp == timestamp && other.slot == slot &&
+         other.state == state && other.data == data;
+}
 } // namespace common::itf

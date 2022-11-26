@@ -6,7 +6,9 @@
 #if USE_ORIGINAL_CLASS(TimerWheel)
 // clang-format on
 
+#include "common/utils/Time.hpp"
 #include "common/utils/Timer.hpp"
+
 #include <algorithm>
 #include <functional>
 #include <memory>
@@ -26,10 +28,20 @@ public:
     friend class TimerWheel;
 
   public:
-    Subscription(Subscription &&other) = default;
-    Subscription &operator=(Subscription &&other) = default;
+    Subscription(Subscription &&other) {
+      this->id = other.id;
+      this->timerWheel = other.timerWheel;
+      other.timerWheel = nullptr;
+    };
 
-    Subscription(const Subscription &other) = default;
+    Subscription &operator=(Subscription &&other) {
+      this->id = other.id;
+      this->timerWheel = other.timerWheel;
+      other.timerWheel = nullptr;
+      return *this;
+    };
+
+    Subscription(const Subscription &other) = delete;
     Subscription &operator=(const Subscription &other) = delete;
 
     ~Subscription() = default;
@@ -52,19 +64,20 @@ public:
     TimerWheel *timerWheel{nullptr};
   };
 
-public:
   TimerWheel(const int slot_ = 500) : slot{slot_} {};
   TimerWheel(const TimerWheel &other) = delete;
   TimerWheel(TimerWheel &&other) = delete;
   TimerWheel &operator=(const TimerWheel &other) = delete;
   TimerWheel &operator=(TimerWheel &&other) = delete;
-  ~TimerWheel() = default;
+  ~TimerWheel() { stop(); };
 
   void start() {
+    std::this_thread::sleep_for(std::chrono::milliseconds(
+        ::common::utils::Time::getTimeToTheNearestSlot() + 1));
     timer.setInterval(
         [&]() {
           std::scoped_lock lock(mutex);
-          for (const auto [_, c] : callbacks) {
+          for (const auto &[_, c] : callbacks) {
             c();
           }
         },
@@ -79,7 +92,7 @@ public:
   Subscription subscribe(std::function<void()> callback) {
     std::scoped_lock lock(mutex);
     Subscription key{counter, this};
-    callbacks.emplace(key, callback);
+    callbacks.emplace(std::move(key), callback);
     Subscription subscription{counter, this};
     counter++;
     return subscription;
@@ -99,7 +112,6 @@ private:
   uint64_t counter{0};
   std::mutex mutex{};
 };
-
 } // namespace slot
 
 #endif
