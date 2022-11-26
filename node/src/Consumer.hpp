@@ -19,13 +19,6 @@
 
 
 
-//refactor klast consumer -> messageBroker
-//2 implementacje consumera
-//1 dla controlChannel
-//2 dla messageChannela
-//3 potencjalnie 3 dla mechanizmu konsensusu
-
-
 class Consumer {
 public:
     Consumer(const common::NodeConfiguration& config);

@@ -10,3 +10,13 @@ add_ut(TestConfigurationReader
     spdlog::spdlog 
     common
 )
+
+add_ut(TestBuffer
+  SRC 
+    TestBuffer.cpp
+    "${CMAKE_CURRENT_LIST_DIR}/../Buffer.cpp"
+  LIB 
+    common
+  ORIGS
+    Buffer
+)

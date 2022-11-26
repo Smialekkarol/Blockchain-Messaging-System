@@ -31,7 +31,7 @@ public:
   
 private:
   ClientInfo clientInfo;
-  Timer<std::function<void()>> timer{};
+  common::utils::Timer timer{};
   AmqpHandler amqpHandler;
   common::Buffer<std::string> buffer{};
   ChannelStore channelStore{};

@@ -1,7 +1,11 @@
+#include "Buffer.hpp"
 #include "ConfigurationReader.hpp"
 #include "Consumer.hpp"
-#include "Producer.hpp"
 #include "common/NodeConfiguration.hpp"
+#include "common/utils/Time.hpp"
+#include "db/RedisDB.hpp"
+#include "slot/SlotHandler.hpp"
+#include "slot/TimerWheel.hpp"
 #include <spdlog/spdlog.h>
 
 void logConfiguration(const common::NodeConfiguration &config) {
@@ -26,7 +30,30 @@ int main(int argc, char **argv) {
   const auto &configValue = config.value();
   logConfiguration(configValue);
 
+  ::db::RedisDB redis{};
+  Buffer buffer{};
+  ::slot::TimerWheel timerWheel{};
+  ::slot::SlotHandler slotHandler{redis, buffer};
+  timerWheel.subscribe([&redis, &buffer]() {
+    std::thread t([=, &redis, &buffer]() {
+      ::slot::SlotHandler slotHandler{redis, buffer};
+      slotHandler.handle();
+    });
+    t.detach();
+  });
+  timerWheel.subscribe([&redis]() {
+    constexpr std::uint16_t minute{120};
+    const auto slot = ::common::utils::Time::getSlot();
+    if (slot % minute == 0) {
+      redis.save();
+    }
+  });
+  timerWheel.start();
+
   Consumer::run(configValue);
-  Producer{configValue}.run();
+
+  while (true) {
+  }
+
   return 0;
 }

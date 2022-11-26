@@ -28,6 +28,7 @@ if(ENABLE_UNIT_TESTS)
     endforeach()
 
     set(libraries GTest::gtest GTest::gmock GTest::gtest_main static_mock::static_mock Threads::Threads ${arg_LIB})
+    target_include_directories(${target_name} PRIVATE ${libraries})
     target_link_libraries(${target_name} PRIVATE ${libraries})
 
     gtest_discover_tests(${target_name})

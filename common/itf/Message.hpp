@@ -9,6 +9,8 @@ struct Message {
   Message(const uint64_t timestamp_, const std::string &data_,
           const std::string &author_);
 
+  bool operator==(const Message &other) const;
+
   uint64_t timestamp{0};
   std::string data{};
   std::string author{};

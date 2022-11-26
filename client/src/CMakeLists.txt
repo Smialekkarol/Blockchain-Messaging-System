@@ -4,6 +4,9 @@ set(USER_SOURCES
   ${USER_DIR}/App.cpp
   ${USER_DIR}/Utils.cpp
   ${USER_DIR}/AmqpHandler.cpp
+  ${USER_DIR}../../../common/utils/Time.cpp
+  ${USER_DIR}../../../common/utils/Timestamp.cpp
+  ${USER_DIR}../../../common/utils/Text.cpp
 )
 
 add_executable(user ${USER_SOURCES})
