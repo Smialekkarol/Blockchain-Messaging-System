@@ -7,12 +7,7 @@
 
 void Consumer::run(const common::NodeConfiguration& config)
 {
-    std::thread{
-        [&config]()
-        {
-            Consumer{ config }.run();
-        }
-    }.detach();
+    std::thread{ [&config]() { Consumer{ config }.run(); } }.detach();
 }
 
 Consumer::Consumer(const common::NodeConfiguration& config)
