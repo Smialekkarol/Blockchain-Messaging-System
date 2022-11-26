@@ -1,8 +1,9 @@
 set(USER_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 set(USER_SOURCES 
-  ${USER_DIR}/Client.cpp
+  ${USER_DIR}/ClientAMQP.cpp
   ${USER_DIR}/App.cpp
   ${USER_DIR}/Utils.cpp
+  ${USER_DIR}/AmqpHandler.cpp
 )
 
 add_executable(user ${USER_SOURCES})
@@ -17,4 +18,6 @@ endif()
 target_link_libraries(user PRIVATE
             common
             boost_system
-            pthread)
+            pthread
+            amqpcpp 
+            ev)

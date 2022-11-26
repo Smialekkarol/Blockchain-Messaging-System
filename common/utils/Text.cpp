@@ -11,7 +11,7 @@ std::string Text::toLower(const std::string &input) {
   return lower;
 }
 
-std::vector<std::string> splitBySeparator(const std::string data, const char * separator) {
+std::vector<std::string> Text::splitBySeparator(const std::string data, const char * separator) {
   typedef boost::tokenizer<boost::char_separator<char>> tokenizer;
 
   boost::char_separator<char> at(separator);
