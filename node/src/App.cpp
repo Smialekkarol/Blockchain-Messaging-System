@@ -30,13 +30,15 @@ int main(int argc, char **argv) {
   const auto &configValue = config.value();
   logConfiguration(configValue);
 
+
   ::db::RedisDB redis{};
   Buffer buffer{};
+  Consumer consumer(configValue, buffer);
   ::slot::TimerWheel timerWheel{};
-  ::slot::SlotHandler slotHandler{redis, buffer};
-  timerWheel.subscribe([&redis, &buffer]() {
-    std::thread t([=, &redis, &buffer]() {
-      ::slot::SlotHandler slotHandler{redis, buffer};
+  ::slot::SlotHandler slotHandler{redis, buffer, consumer};
+  timerWheel.subscribe([&redis, &buffer, &consumer]() {
+    std::thread t([=, &redis, &buffer, &consumer]() {
+      ::slot::SlotHandler slotHandler{redis, buffer, consumer};
       slotHandler.handle();
     });
     t.detach();
@@ -50,7 +52,7 @@ int main(int argc, char **argv) {
   });
   timerWheel.start();
 
-  Consumer::run(configValue);
+  std::thread{ [&consumer]() { consumer.run(); } }.detach();
 
   while (true) {
   }

@@ -5,16 +5,12 @@
 #include "common/utils/Timer.hpp"
 
 
-void Consumer::run(const common::NodeConfiguration& config)
-{
-    std::thread{ [&config]() { Consumer{ config }.run(); } }.detach();
-}
-
-Consumer::Consumer(const common::NodeConfiguration& config)
+Consumer::Consumer(const common::NodeConfiguration& config, Buffer& buffer)
     : loop(ev_loop_new(0))
     , handler(loop)
     , connection(&handler, AMQP::Address(config.self.address))
     , channel(&connection)
+    , buffer(buffer)
 {
     channel.onError([](const char* message)
         {
@@ -100,17 +96,27 @@ void Consumer::createChannel(const std::string& channelToBeCreated, std::string&
                 common::itf::Message messageObject = messageSerializer.deserialize(data[1]);
                 spdlog::debug(messageObject.author + ": " + messageObject.data + "\n");
                 std::string serializedData = data[0] + "@" + data[1];
-                for (auto client : clientNames)
-                {
-                    sendDataToClients(client, serializedData);
-                }
-
+                buffer.push(messageObject);
             });
 }
 
-void Consumer::sendDataToClients(std::string clientName, std::string message)
+void Consumer::publish(const common::itf::Block& block)
 {
-    std::string clientControlChannelName = clientName + "_ClientChannel";
-    channel.publish("", clientControlChannelName, message);
-    std::cout << "sent to " << clientControlChannelName << std::endl << message << std::endl;
+    for (const auto& clientName : clientNames)
+    {
+        std::string clientChannel = clientName + "_ClientChannel";
+        sendDataToClients(clientChannel, block.data);
+    }
+}
+
+void Consumer::sendDataToClients(
+    const std::string& clientChannel, const std::vector<common::itf::Message>& messages)
+{
+    serialization::MessageSerializer messageSerializer;
+    for (const auto& msg : messages)
+    {
+        std::cout << "sent to " << clientChannel << std::endl << msg.data << std::endl;
+        std::string data = messageSerializer.serialize(msg);
+        channel.publish("", clientChannel, data);
+    }
 }

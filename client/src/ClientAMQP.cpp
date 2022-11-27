@@ -1,4 +1,5 @@
 #include "ClientAMQP.hpp"
+#include <ctime>
 
 namespace client
 {
@@ -108,15 +109,17 @@ void ClientAMQP::listen(std::string que)
             serialization::HeaderSerializer headerSerializer;
             serialization::MessageSerializer messageSerializer;
             std::string serializedData;
+            time_t now = time(0);
+            tm* ltm = localtime(&now);
+
             for (auto msg : buffer.getBufferedData())
             {
                 std::vector<std::string> dataAttributes
                     = common::utils::Text::splitBySeparator(msg, "@");
-                auto header = dataAttributes[0];
-                auto message = dataAttributes[1];
-                auto headerObject = headerSerializer.deserialize(header);
+                auto message = dataAttributes[0];
                 auto messageObject = messageSerializer.deserialize(message);
-                std::cout << messageObject.author << ": " << messageObject.data << std::endl;
+                std::cout << 1 + ltm->tm_hour << ":" << ltm->tm_min << ":" << ltm->tm_sec << " "
+                          << messageObject.author << ": " << messageObject.data << std::endl;
             }
             buffer.clearBuffer();
         }
