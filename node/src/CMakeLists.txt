@@ -6,9 +6,6 @@ set(NODE_SOURCES
   ${NODE_DIR}/Utils.cpp
   ${NODE_DIR}/ConfigurationReader.cpp
   ${NODE_DIR}/Buffer.cpp
-  ${NODE_DIR}../../../common/utils/Time.cpp
-  ${NODE_DIR}../../../common/utils/Timestamp.cpp
-  ${NODE_DIR}../../../common/utils/Text.cpp
 )
 
 find_package(amqpcpp REQUIRED)

@@ -1,9 +1,9 @@
 #pragma once
 
 // clang-format off
-#include <static_mock/Mock.hpp>
-#include INCLUDE_TESTABLE_MOCK("ut/mocks/BufferMock.hpp")
-#if USE_ORIGINAL_CLASS(Buffer)
+// #include <static_mock/Mock.hpp>
+// #include INCLUDE_TESTABLE_MOCK("ut/mocks/BufferMock.hpp")
+// #if USE_ORIGINAL_CLASS(Buffer)
 // clang-format on
 
 #include <deque>
@@ -32,4 +32,4 @@ private:
   std::deque<::common::itf::Block> blocks{};
   std::mutex mutex{};
 };
-#endif
+// #endif

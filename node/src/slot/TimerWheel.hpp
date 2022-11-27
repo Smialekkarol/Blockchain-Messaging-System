@@ -1,9 +1,9 @@
 #pragma once
 
 // clang-format off
-#include <static_mock/Mock.hpp>
-#include INCLUDE_TESTABLE_MOCK("ut/mocks/TimerWheelMock.hpp")
-#if USE_ORIGINAL_CLASS(TimerWheel)
+// #include <static_mock/Mock.hpp>
+// #include INCLUDE_TESTABLE_MOCK("ut/mocks/TimerWheelMock.hpp")
+// #if USE_ORIGINAL_CLASS(TimerWheel)
 // clang-format on
 
 #include "common/utils/Time.hpp"
@@ -114,4 +114,4 @@ private:
 };
 } // namespace slot
 
-#endif
+// #endif

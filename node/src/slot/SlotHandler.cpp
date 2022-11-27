@@ -4,8 +4,8 @@
 
 namespace slot {
 
-SlotHandler::SlotHandler(::db::RedisDB &redis_, Buffer &buffer_)
-    : redis{redis_}, buffer{buffer_} {}
+SlotHandler::SlotHandler(::db::RedisDB &redis_, Buffer &buffer_, Consumer& consumer_)
+    : redis{redis_}, buffer{buffer_}, consumer{consumer_} {}
 
 void SlotHandler::handle() {
   shouldCallNextHandler = true;
@@ -18,6 +18,7 @@ void SlotHandler::handle() {
 }
 
 void SlotHandler::savePendingBlock() {
+  
   buffer.save();
   if (const auto b = buffer.pop(); b.has_value()) {
     this->block = b.value();
@@ -29,6 +30,10 @@ void SlotHandler::savePendingBlock() {
 
 void SlotHandler::saveCompleteBlock() {
   block.state = ::common::itf::BlockState::COMPLETED;
-  redis.update(block, blockIndex, ::common::itf::DEFAULT_BLOCKAIN);
+  redis.update(block, blockIndex -1, ::common::itf::DEFAULT_BLOCKAIN);
+}
+
+void SlotHandler::publishBlock(){
+  consumer.publish(block);
 }
 } // namespace slot

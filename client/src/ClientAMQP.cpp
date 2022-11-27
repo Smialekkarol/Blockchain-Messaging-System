@@ -1,4 +1,5 @@
 #include "ClientAMQP.hpp"
+#include <ctime>
 
 namespace client
 {
@@ -48,18 +49,27 @@ int ClientAMQP::SendMessage(std::string queName, std::string dataToSend)
 {
     try
     {
+    //    serialization::MessageSerializer messageSerializer;
+    //     serialization::HeaderSerializer headerSerializer;
+    //     common::itf::Header header("Send", clientInfo.serverName, queName, clientInfo.clientName);
+    //     common::itf::Message message(
+    //         common::utils::Timestamp::get(), dataToSend, clientInfo.clientName);
+    //     std::string data = headerSerializer.serialize(header) + "@"
+    //         + messageSerializer.serialize(message) + "@\n";
+
+        timer1.setInterval([this, &queName, &dataToSend](){
         serialization::MessageSerializer messageSerializer;
         serialization::HeaderSerializer headerSerializer;
-
         common::itf::Header header("Send", clientInfo.serverName, queName, clientInfo.clientName);
         common::itf::Message message(
-            common::utils::Timestamp::get(), dataToSend, clientInfo.clientName);
-
+            common::utils::Timestamp::get(), dataToSend+std::to_string(counter), clientInfo.clientName);
         std::string data = headerSerializer.serialize(header) + "@"
             + messageSerializer.serialize(message) + "@\n";
+            amqpHandler.send(queName, data);
+            counter++;
 
-
-        amqpHandler.send(queName, data);
+            }, 100);
+        // amqpHandler.send(queName, data);
     }
     catch (std::exception const& e)
     {
@@ -80,7 +90,7 @@ int ClientAMQP::getData(std::string queName, std::string RequestData)
             "GetHistory", clientInfo.serverName, queName, clientInfo.clientName);
         common::itf::Message message(
             common::utils::Timestamp::get(), RequestData, clientInfo.clientName);
-
+      
         std::string data = headerSerializer.serialize(header);
         +"@" + messageSerializer.serialize(message) + "\n";
     }
@@ -103,24 +113,27 @@ void ClientAMQP::listen(std::string que)
 
     auto print = [this]()
     {
+        
         if (buffer.getSize() > 0)
         {
             serialization::HeaderSerializer headerSerializer;
             serialization::MessageSerializer messageSerializer;
             std::string serializedData;
+            time_t now = time(0);
+            tm *ltm = localtime(&now);
+
             for (auto msg : buffer.getBufferedData())
             {
                 std::vector<std::string> dataAttributes
                     = common::utils::Text::splitBySeparator(msg, "@");
-                auto header = dataAttributes[0];
-                auto message = dataAttributes[1];
-                auto headerObject = headerSerializer.deserialize(header);
+                auto message = dataAttributes[0];
                 auto messageObject = messageSerializer.deserialize(message);
-                std::cout << messageObject.author << ": " << messageObject.data << std::endl;
+                std::cout <<1+ltm->tm_hour << ":"<< ltm->tm_min << ":"
+    << ltm->tm_sec <<" "<< messageObject.author << ": " << messageObject.data << std::endl;
             }
             buffer.clearBuffer();
         }
     };
-    timer.setInterval(print, 200);
+    timer.setInterval(print, 100);
 }
 }

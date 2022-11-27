@@ -5,9 +5,10 @@
 #include <chrono>
 #include "common/utils/Timestamp.hpp"
 #include "common/utils/Text.hpp"
+#include "common/utils/Timer.hpp"
 #include "common/serialization/MessageSerializer.hpp"
 #include "common/serialization/HeaderSerializer.hpp"
-#include "common/utils/Timer.hpp"
+
 #include "ClientInfo.hpp"
 
 #include "AmqpHandler.hpp"
@@ -32,9 +33,11 @@ public:
 private:
   ClientInfo clientInfo;
   common::utils::Timer timer{};
+  common::utils::Timer timer1{};
   AmqpHandler amqpHandler;
   common::Buffer<std::string> buffer{};
   ChannelStore channelStore{};
+  int counter = 0;
 
 };
 }

@@ -1,9 +1,9 @@
 #pragma once
 
 // clang-format off
-#include <static_mock/Mock.hpp>
-#include INCLUDE_TESTABLE_MOCK("ut/mocks/RedisDBMock.hpp")
-#if USE_ORIGINAL_CLASS(RedisDB)
+// #include <static_mock/Mock.hpp>
+// #include INCLUDE_TESTABLE_MOCK("ut/mocks/RedisDBMock.hpp")
+// #if USE_ORIGINAL_CLASS(RedisDB)
 // clang-format on
 
 #include <mutex>
@@ -36,4 +36,4 @@ private:
   std::mutex mutex{};
 };
 } // namespace db
-#endif
+// #endif

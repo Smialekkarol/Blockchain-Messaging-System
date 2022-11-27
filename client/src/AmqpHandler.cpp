@@ -47,8 +47,9 @@ AmqpHandler& AmqpHandler::receive(std::string que, common::Buffer<std::string>& 
     struct ev_loop* loop = ev_loop_new();
     channel.consume(que, AMQP::noack)
         .onReceived([this, &buffer](const AMQP::Message& msg, uint64_t tag, bool redelivered)
-            {
+            {   
                 buffer.addMessage(msg.body());
+        
             })
         .onSuccess([](const std::string& consumertag)
             {
