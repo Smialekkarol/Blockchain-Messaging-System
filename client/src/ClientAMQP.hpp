@@ -1,40 +1,40 @@
 #pragma once
 
 #include <iostream>
-#include <string>
-#include <chrono>
-#include "common/utils/Timestamp.hpp"
-#include "common/utils/Text.hpp"
+#include "common/ChannelStore.hpp"
+#include "common/utils/Timer.hpp"
 #include "common/serialization/MessageSerializer.hpp"
 #include "common/serialization/HeaderSerializer.hpp"
-#include "common/utils/Timer.hpp"
 #include "ClientInfo.hpp"
-
 #include "AmqpHandler.hpp"
-#include "common/ChannelStore.hpp"
 
 namespace client {
 
 class ClientAMQP {
 public:
-  ClientAMQP(ClientInfo &clientInfo);
+  explicit ClientAMQP(ClientInfo &clientInfo);
 
   ~ClientAMQP();
 
-  int MakeInitialConnection(std::string channelName);
+  void makeInitialConnection(const std::string& channelName);
 
-  int SendMessage(std::string queName, std::string message);
+  void sendMessage(const std::string &queName, const std::string& message);
 
-  int getData(std::string queName, std::string date);
+  void getData(const std::string& queName, const std::string &date);
 
-  void listen(std::string que);
+  void listen(const std::string& que);
+
+  std::string serializeData(common::itf::Header & header, common::itf::Message & message);
   
 private:
   ClientInfo clientInfo;
-  common::utils::Timer timer{};
   AmqpHandler amqpHandler;
   common::Buffer<std::string> buffer{};
+  common::utils::Timer timer{};
   ChannelStore channelStore{};
-
+  serialization::HeaderSerializer headerSerializer{};
+  serialization::MessageSerializer messageSerializer{};
+  std::mutex mutex{};
 };
+
 }

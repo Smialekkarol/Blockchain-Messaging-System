@@ -16,7 +16,7 @@ std::vector<std::string> Text::splitBySeparator(const std::string data, const ch
 
   boost::char_separator<char> at(separator);
   tokenizer dataTokens(data, at);
-  std::vector<std::string> dataAttributes;
+  std::vector<std::string> dataAttributes{};
 
   BOOST_FOREACH (std::string const &token, dataTokens) {
     dataAttributes.push_back(token);

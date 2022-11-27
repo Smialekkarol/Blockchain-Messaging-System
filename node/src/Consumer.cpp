@@ -5,16 +5,12 @@
 #include "common/utils/Timer.hpp"
 
 
-void Consumer::run(const common::NodeConfiguration& config)
-{
-    std::thread{ [&config]() { Consumer{ config }.run(); } }.detach();
-}
-
-Consumer::Consumer(const common::NodeConfiguration& config)
+Consumer::Consumer(const common::NodeConfiguration& config, Buffer& buffer)
     : loop(ev_loop_new(0))
     , handler(loop)
     , connection(&handler, AMQP::Address(config.self.address))
     , channel(&connection)
+    , buffer(buffer)
 {
     channel.onError([](const char* message)
         {
@@ -57,14 +53,11 @@ void Consumer::handleControlMessage(const std::string& data)
         dataAttributes.push_back(token);
     }
 
-    auto serializedHeader = dataAttributes[0];
-    auto serializedMessage = dataAttributes[1];
+    const std::string& serializedHeader = dataAttributes.at(0);
+    const std::string& serializedMessage = dataAttributes.at(1);
 
-    serialization::HeaderSerializer headerSerializer;
-    serialization::MessageSerializer messageSerializer;
-
-    common::itf::Header header = headerSerializer.deserialize(serializedHeader);
-    common::itf::Message message = messageSerializer.deserialize(serializedMessage);
+    const common::itf::Header& header = headerSerializer.deserialize(serializedHeader);
+    const common::itf::Message& message = messageSerializer.deserialize(serializedMessage);
 
 
     if (header.target == "CreateChannel")
@@ -73,7 +66,7 @@ void Consumer::handleControlMessage(const std::string& data)
     }
 }
 
-void Consumer::createChannel(const std::string& channelToBeCreated, std::string& author)
+void Consumer::createChannel(const std::string& channelToBeCreated, const std::string& author)
 {
 
     channel.declareQueue(channelToBeCreated, AMQP::durable)
@@ -93,24 +86,32 @@ void Consumer::createChannel(const std::string& channelToBeCreated, std::string&
     channel.consume(channelToBeCreated, AMQP::noack)
         .onReceived([this](const AMQP::Message& msg, uint64_t tag, bool redelivered)
             {
-
                 std::vector<std::string> data
                     = common::utils::Text::splitBySeparator(msg.body(), "@");
-                serialization::MessageSerializer messageSerializer;
-                common::itf::Message messageObject = messageSerializer.deserialize(data[1]);
-                spdlog::debug(messageObject.author + ": " + messageObject.data + "\n");
-                std::string serializedData = data[0] + "@" + data[1];
-                for (auto client : clientNames)
-                {
-                    sendDataToClients(client, serializedData);
-                }
 
+                const std::string serializedMessage = data.at(1);
+                common::itf::Message message = messageSerializer.deserialize(serializedMessage);
+                spdlog::debug(message.author + ": " + message.data + "\n");
+                buffer.push(message);
             });
 }
 
-void Consumer::sendDataToClients(std::string clientName, std::string message)
+void Consumer::publish(const common::itf::Block& block)
 {
-    std::string clientControlChannelName = clientName + "_ClientChannel";
-    channel.publish("", clientControlChannelName, message);
-    std::cout << "sent to " << clientControlChannelName << std::endl << message << std::endl;
+    for (const auto& clientName : clientNames)
+    {
+        std::string clientChannel = clientName + "_ClientChannel";
+        sendDataToClients(clientChannel, block.data);
+    }
+}
+
+void Consumer::sendDataToClients(
+    const std::string& clientChannel, const std::vector<common::itf::Message>& messages)
+{
+    for (const auto& msg : messages)
+    {
+        spdlog::debug("sent to " + clientChannel + "\n" + msg.data);
+        const std::string data = messageSerializer.serialize(msg);
+        channel.publish("", clientChannel, data);
+    }
 }

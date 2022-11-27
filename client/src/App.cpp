@@ -2,7 +2,6 @@
 #include <iostream>
 #include "ClientAMQP.hpp"
 
-using namespace client;
 
 int main(int argc, char** argv)
 {
@@ -14,17 +13,16 @@ int main(int argc, char** argv)
         return EXIT_FAILURE;
     }
 
-    std::string host = argv[1];
-    const auto port = argv[2];
-    const auto serverName = argv[3];
-    const auto clientName = argv[4];
+    const std::string& host = argv[1];
+    const auto& port = argv[2];
+    const auto& serverName = argv[3];
+    const auto& clientName = argv[4];
 
 
-    ClientInfo clientInfo(host, port, serverName, clientName);
-    ClientAMQP client = ClientAMQP(clientInfo);
+    client::ClientInfo clientInfo(host, port, serverName, clientName);
+    client::ClientAMQP client(clientInfo);
 
-    std::string command;
-
+    std::string command{};
 
     bool shouldExit{ false };
     while (not shouldExit)
@@ -43,7 +41,7 @@ int main(int argc, char** argv)
             if (args.size() == 2)
             {
                 const auto& queToBeCreated = args[1];
-                client.MakeInitialConnection(queToBeCreated);
+                client.makeInitialConnection(queToBeCreated);
             }
             else
                 std::cout << "initChannel: <queToBeCreated>\n";
@@ -53,9 +51,9 @@ int main(int argc, char** argv)
         {
             if (args.size() == 3)
             {
-                const auto& queName = args[1];
-                const auto& message = args[2];
-                client.SendMessage(queName, message);
+                const std::string & queName = args[1];
+                const std::string & message = args[2];
+                client.sendMessage(queName, message);
             }
             else
                 std::cout << "send: <queName> <message>\n";

@@ -42,7 +42,6 @@ public:
         counter.fetch_sub(1);
         return;
       }
-      std::cout<<delay<<std::endl; 
       std::this_thread::sleep_for(std::chrono::milliseconds(delay));
       if (!active.load()) {
         counter.fetch_sub(1);

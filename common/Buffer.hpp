@@ -1,25 +1,46 @@
-#include <iostream>
+#pragma once
 #include <vector>
 
-namespace common {
+namespace common
+{
 
-template <typename T> class Buffer {
+template <typename dataType>
+class Buffer
+{
 public:
-  Buffer() = default;
 
-  inline void addMessage(T message) { bufferedData.push_back(message); }
-  inline bool isEmpty() const { return bufferedData.empty(); }
-  inline int getSize() const { return bufferedData.size(); }
-  inline void clearBuffer() { bufferedData.clear(); }
-  inline std::vector<T> getBufferedData() { return bufferedData; }
-
-  void print() {
-    for (auto msg : bufferedData) {
-      std::cout << "author " << msg.author << ": " << msg.data << std::endl;
+    void pushBack(dataType message)
+    {
+        std::scoped_lock lock(mutex);
+        data.push_back(message);
     }
-  }
+
+    bool isEmpty()
+    {
+        std::scoped_lock lock(mutex);
+        return data.empty();
+    }
+
+    inline int getSize()
+    {
+        std::scoped_lock lock(mutex);
+        return data.size();
+    }
+
+    inline void clearBuffer()
+    {
+        std::scoped_lock lock(mutex);
+        data.clear();
+    }
+
+    inline std::vector<dataType> getData()
+    {
+        std::scoped_lock lock(mutex);
+        return data;
+    }
 
 private:
-  std::vector<T> bufferedData{};
+    std::vector<dataType> data{};
+    std::mutex mutex{};
 };
 }

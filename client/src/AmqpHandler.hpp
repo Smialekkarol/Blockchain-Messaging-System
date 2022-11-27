@@ -1,9 +1,5 @@
 #pragma once
-#include <amqpcpp.h>
-#include <amqpcpp/libev.h>
-#include <ev.h>
 #include "common/ConnectionHandler.hpp"
-#include "common/serialization/MessageSerializer.hpp"
 #include "common/Buffer.hpp"
 
 namespace client
@@ -26,4 +22,5 @@ private:
     AMQP::TcpConnection connection;
     AMQP::TcpChannel channel;
 };
+
 }

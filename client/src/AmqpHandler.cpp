@@ -24,7 +24,7 @@ void AmqpHandler::createQueue(std::string que)
     channel.declareQueue(que, AMQP::durable)
         .onSuccess([this](const std::string& name, uint32_t messagecount, uint32_t consumercount)
             {
-                std::cout << "que " + name + " created\n";
+                spdlog::debug("que " + name + " created");
                 ev_break(loop, EVBREAK_ONE);
             })
         .onError([](const char* message)
@@ -48,18 +48,17 @@ AmqpHandler& AmqpHandler::receive(std::string que, common::Buffer<std::string>& 
     channel.consume(que, AMQP::noack)
         .onReceived([this, &buffer](const AMQP::Message& msg, uint64_t tag, bool redelivered)
             {
-                buffer.addMessage(msg.body());
+                buffer.pushBack(msg.body());
             })
         .onSuccess([](const std::string& consumertag)
             {
-
-                std::cout << "consume operation started: " << consumertag << std::endl;
+                spdlog::debug("consume operation started: " + consumertag);
             })
-        .onError([](const char* message)
+        .onError([](const std::string& message)
             {
-
-                std::cout << "consume operation failed : " << message << std::endl;
+                spdlog::debug("consume operation failed : " + message);
             });
+            
     return *this;
 }
 void AmqpHandler::runEventLoop()

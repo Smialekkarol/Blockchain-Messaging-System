@@ -1,4 +1,7 @@
 #include "ClientAMQP.hpp"
+#include "common/utils/Time.hpp"
+#include "common/utils/Timestamp.hpp"
+#include "common/utils/Text.hpp"
 
 namespace client
 {
@@ -17,7 +20,7 @@ ClientAMQP::~ClientAMQP()
 {
 }
 
-int ClientAMQP::MakeInitialConnection(std::string queToBeCreated)
+void ClientAMQP::makeInitialConnection(const std::string& queToBeCreated)
 {
     try
     {
@@ -28,71 +31,52 @@ int ClientAMQP::MakeInitialConnection(std::string queToBeCreated)
         common::itf::Message message(
             common::utils::Timestamp::get(), queToBeCreated, clientInfo.clientName);
 
-        serialization::MessageSerializer messageSerializer;
-        serialization::HeaderSerializer headerSerializer;
-
-        auto data = headerSerializer.serialize(header) + "@" + messageSerializer.serialize(message)
-            + "@\n";
-
+        const std::string & data = serializeData(header, message);
         amqpHandler.send(queName, data);
     }
-    catch (std::exception const& e)
+    catch (const std::exception& e)
     {
-        std::cerr << "Error: " << e.what() << std::endl;
-        return EXIT_FAILURE;
+        spdlog::error(e.what());
     }
-    return 0;
 }
 
-int ClientAMQP::SendMessage(std::string queName, std::string dataToSend)
+void ClientAMQP::sendMessage(const std::string& queName, const std::string& dataToSend)
 {
     try
     {
-        serialization::MessageSerializer messageSerializer;
-        serialization::HeaderSerializer headerSerializer;
-
         common::itf::Header header("Send", clientInfo.serverName, queName, clientInfo.clientName);
         common::itf::Message message(
             common::utils::Timestamp::get(), dataToSend, clientInfo.clientName);
 
-        std::string data = headerSerializer.serialize(header) + "@"
-            + messageSerializer.serialize(message) + "@\n";
+        const std::string& data = serializeData(header, message);
 
 
         amqpHandler.send(queName, data);
     }
-    catch (std::exception const& e)
+    catch (const std::exception& e)
     {
-        std::cerr << "Error: " << e.what() << std::endl;
-        return EXIT_FAILURE;
+        spdlog::error(e.what());
     }
-    return EXIT_SUCCESS;
 }
 
-int ClientAMQP::getData(std::string queName, std::string RequestData)
+void ClientAMQP::getData(const std::string& queName, const std::string& RequestData)
 {
     try
     {
-        serialization::MessageSerializer messageSerializer;
-        serialization::HeaderSerializer headerSerializer;
-
         common::itf::Header header(
             "GetHistory", clientInfo.serverName, queName, clientInfo.clientName);
         common::itf::Message message(
             common::utils::Timestamp::get(), RequestData, clientInfo.clientName);
 
-        std::string data = headerSerializer.serialize(header);
-        +"@" + messageSerializer.serialize(message) + "\n";
+        const std::string& data = serializeData(header, message);
     }
-    catch (std::exception const& e)
+    catch (const std::exception& e)
     {
-        std::cerr << "Error: " << e.what() << std::endl;
-        return EXIT_FAILURE;
+        spdlog::error(e.what());
     }
-    return 0;
 }
 
-void ClientAMQP::listen(std::string que)
+void ClientAMQP::listen(const std::string& que)
 {
     std::thread{
         [this, que]()
@@ -101,26 +85,27 @@ void ClientAMQP::listen(std::string que)
         }
     }.detach();
 
-    auto print = [this]()
+    auto handleBufferedData = [this]()
     {
-        if (buffer.getSize() > 0)
+        if (not buffer.isEmpty())
         {
-            serialization::HeaderSerializer headerSerializer;
-            serialization::MessageSerializer messageSerializer;
-            std::string serializedData;
-            for (auto msg : buffer.getBufferedData())
+            std::scoped_lock(mutex);
+            for (const auto& msg : buffer.getData())
             {
-                std::vector<std::string> dataAttributes
-                    = common::utils::Text::splitBySeparator(msg, "@");
-                auto header = dataAttributes[0];
-                auto message = dataAttributes[1];
-                auto headerObject = headerSerializer.deserialize(header);
-                auto messageObject = messageSerializer.deserialize(message);
-                std::cout << messageObject.author << ": " << messageObject.data << std::endl;
+                std::vector<std::string> data = common::utils::Text::splitBySeparator(msg, "@");
+                const std::string& serializedMessage = data.at(0);
+                auto message = messageSerializer.deserialize(serializedMessage);
+                std::cout << common::utils::Time::getCurrentTime() << " " << message.author << ": "
+                          << message.data << std::endl;
             }
             buffer.clearBuffer();
         }
     };
-    timer.setInterval(print, 200);
+    timer.setInterval(handleBufferedData, 200);
+}
+
+std::string ClientAMQP::serializeData(common::itf::Header& header, common::itf::Message& message)
+{
+    return headerSerializer.serialize(header) + "@" + messageSerializer.serialize(message) + "\n";
 }
 }

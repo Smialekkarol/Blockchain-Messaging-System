@@ -1,4 +1,5 @@
 #pragma once
+#include <vector>
 #include "Channel.hpp"
 
 namespace common
@@ -14,16 +15,10 @@ public:
         channels.push_back(channel);
     }
 
-    void addChannel(std::string channelName)
-    {
-        channels.emplace_back("default", channelName);
-    }
-
     std::vector<Channel>& getChannels()
     {
         return channels;
     }
-
 
 private:
     std::vector<Channel> channels{};

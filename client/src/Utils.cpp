@@ -1,4 +1,6 @@
 #include "Utils.hpp"
+#include <sstream>
+#include <algorithm>
 
 std::vector<std::string> tokenizeBySpace(const std::string &command) {
   std::vector<std::string> args;
