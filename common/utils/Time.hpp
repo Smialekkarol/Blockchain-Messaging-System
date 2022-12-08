@@ -19,7 +19,7 @@ public:
   static std::uint64_t getSlot(const std::uint64_t timestamp);
   static std::uint16_t getTimeToTheNearestSlot();
   static std::uint16_t getTimeToTheNearestSlot(const std::uint64_t timestamp);
-
+  static std::string getCurrentTime();
   static constexpr std::uint16_t SLOT{500};
 };
 } // namespace common::utils

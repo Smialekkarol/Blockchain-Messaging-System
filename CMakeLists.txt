@@ -17,7 +17,6 @@ include(add_ut)
 
 option(BUILD_ALL_COMPONENTS "Enable all components build" OFF)
 option(BUILD_NODE "Enable node build" OFF)
-option(BUILD_GATEWAY "Enable gateway build" OFF)
 option(BUILD_CLIENT "Enable client build" OFF)
 
 set(REPO_ROOT_DIR "${CMAKE_CURRENT_SOURCE_DIR}")
@@ -34,9 +33,6 @@ if(BUILD_NODE OR BUILD_ALL_COMPONENTS)
   add_subdirectory(node)
 endif()
 
-if(BUILD_GATEWAY OR BUILD_ALL_COMPONENTS)
-  add_subdirectory(gateway)
-endif()
 
 if(BUILD_CLIENT OR BUILD_ALL_COMPONENTS)
   add_subdirectory(client)
