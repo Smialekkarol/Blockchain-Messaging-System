@@ -1,9 +1,7 @@
 name: NodeA
-address: "amqp://localhost/"
+address: "amqp://user1:user1@172.17.0.2"
 known_nodes:
-  - 
-    name: NodeB
-    address: "amqp://localhost/"
-  - 
-    name: NodeC
-    address: "amqp://localhost/"
+  - name: NodeB
+    address: "amqp://user1:user1@172.17.0.3"
+  - name: NodeC
+    address: "amqp://user1:user1@172.17.0.4"

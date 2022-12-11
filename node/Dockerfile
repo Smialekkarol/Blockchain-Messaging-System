@@ -127,15 +127,17 @@ RUN cd /home && git clone https://github.com/jbeder/yaml-cpp.git \
   && make -j $(nproc) \
   && make install \
   && make clean \
+  && ldconfig \
   && cd .. \
   && rm -rf yaml-cpp
 
-RUN cd /home && git clone git@github.com:enki/libev.git \
+RUN cd /home && git clone https://github.com/enki/libev.git \
   && cd libev \
   && ./configure \
   && make -j $(($(nproc)-2)) \
   && make install \
   && make clean \
+  && ldconfig \
   && cd .. \
   && rm -rf libev
 

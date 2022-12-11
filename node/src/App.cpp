@@ -8,6 +8,10 @@
 #include "slot/TimerWheel.hpp"
 #include <spdlog/spdlog.h>
 
+#include "io/ChannelStore.hpp"
+#include "io/ConnectionStore.hpp"
+#include "io/ConsensusChannel.hpp"
+
 void logConfiguration(const common::NodeConfiguration &config) {
   const auto &nodes{config.nodes};
   spdlog::info("Loaded {} node(s)", nodes.size());
@@ -30,7 +34,6 @@ int main(int argc, char **argv) {
   const auto &configValue = config.value();
   logConfiguration(configValue);
 
-
   ::db::RedisDB redis{};
   Buffer buffer{};
   Consumer consumer(configValue, buffer);
@@ -50,11 +53,53 @@ int main(int argc, char **argv) {
       redis.save();
     }
   });
+
+  ::io::ConnectionStore connectionStore{};
+  ::io::ChannelStore channelStore{};
+
+  connectionStore.push(configValue.self);
+  const std::string &localAddress = configValue.self.address;
+  auto localConsensusChannel = std::make_unique<::io::ConsensusChannel>(
+      connectionStore.get(localAddress));
+  localConsensusChannel.get()->consume(
+      [localNodeInfo = configValue.self](const AMQP::Message &msg, uint64_t tag,
+                                         bool redelivered) {
+        spdlog::info("[{}]{} Received: {}, {}", localNodeInfo.address,
+                     localNodeInfo.name, msg.body(), tag);
+      });
+
+  channelStore.pushLocal(localAddress, std::move(localConsensusChannel));
+
+  for (const auto &node : configValue.nodes) {
+    connectionStore.push(node);
+    const std::string &remoteAddress = node.address;
+    auto remoteConsensusChannel = std::make_unique<::io::ConsensusChannel>(
+        connectionStore.get(remoteAddress));
+    channelStore.pushRemote(remoteAddress, std::move(remoteConsensusChannel));
+  }
+
+  for (auto &item : connectionStore.get()) {
+    std::thread t([=, &item]() {
+      auto *loop = item.second.loop;
+      auto *connection = item.second.connection.get();
+      ev_run(loop, 0);
+    });
+    t.detach();
+  }
+
   timerWheel.start();
+  std::thread{[&consumer]() { consumer.run(); }}.detach();
 
-  std::thread{ [&consumer]() { consumer.run(); } }.detach();
-
+  int counter{0};
   while (true) {
+    for (auto &[address, channel] : channelStore.getRemote()) {
+      std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+      const std::string message{configValue.self.name + " sending message nr." +
+                                std::to_string(counter) + " to " +
+                                channel->node};
+      channel->publish(message);
+    }
+    counter++;
   }
 
   return 0;
