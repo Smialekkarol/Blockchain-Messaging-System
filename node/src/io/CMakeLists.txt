@@ -5,6 +5,7 @@ if(NOT ENABLE_UNIT_TESTS)
         ${IO_DIR}/ConnectionStore.cpp
         ${IO_DIR}/Channel.cpp
         ${IO_DIR}/ChannelStore.cpp
+        ${IO_DIR}/RandomNumberGenerator.cpp
     )
     target_include_directories(node PRIVATE .)
     target_sources(node PRIVATE ${IO_SOURCES})

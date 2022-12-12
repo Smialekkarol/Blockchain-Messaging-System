@@ -12,6 +12,13 @@
 #include "io/ConnectionStore.hpp"
 #include "io/ConsensusChannel.hpp"
 
+#include "common/serialization/BlockSerializer.hpp"
+#include "io/HeaderSerializer.hpp"
+#include "io/Utils.hpp"
+
+#include "utils/Time.hpp"
+#include <iostream>
+
 void logConfiguration(const common::NodeConfiguration &config) {
   const auto &nodes{config.nodes};
   spdlog::info("Loaded {} node(s)", nodes.size());
@@ -64,8 +71,37 @@ int main(int argc, char **argv) {
   localConsensusChannel.get()->consume(
       [localNodeInfo = configValue.self](const AMQP::Message &msg, uint64_t tag,
                                          bool redelivered) {
-        spdlog::info("[{}]{} Received: {}, {}", localNodeInfo.address,
-                     localNodeInfo.name, msg.body(), tag);
+        spdlog::info("[{}]{} Received: ", localNodeInfo.address,
+                     localNodeInfo.name);
+        spdlog::info("msg.body(): {}", msg.body());
+        std::cout << "msgbody from cout: " << msg.body() << std::endl;
+        const auto &content = ::io::split(msg.body());
+        const auto &header = content.first;
+        const auto &body = content.second;
+        // spdlog::info("header: {}", header);
+        // spdlog::info("body: {}", body);
+
+        ::serialization::BlockSerializer blockSerializer{};
+        ::io::HeaderSerializer headerSerializer{};
+        const auto deserializedHeader = headerSerializer.deserialize(header);
+        const auto deserializedBody = blockSerializer.deserialize(body);
+        spdlog::info("deserializedHeader {}, {}, {}, {}",
+                     static_cast<int>(deserializedHeader.operation),
+                     deserializedHeader.node, deserializedHeader.timestamp,
+                     deserializedHeader.slot);
+        spdlog::info("deserializedBody: {}, {}, {}, {}",
+                     static_cast<int>(deserializedBody.state),
+                     deserializedBody.timestamp, deserializedBody.slot,
+                     deserializedBody.data.size());
+        spdlog::info("deserializedBody[1]: {}, {}, {}",
+                     deserializedBody.data[0].timestamp,
+                     deserializedBody.data[0].author,
+                     deserializedBody.data[0].data);
+
+        spdlog::info("deserializedBody[2]: {}, {}, {}",
+                     deserializedBody.data[1].timestamp,
+                     deserializedBody.data[1].author,
+                     deserializedBody.data[1].data);
       });
 
   channelStore.pushLocal(localAddress, std::move(localConsensusChannel));
@@ -94,10 +130,28 @@ int main(int argc, char **argv) {
   while (true) {
     for (auto &[address, channel] : channelStore.getRemote()) {
       std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-      const std::string message{configValue.self.name + " sending message nr." +
-                                std::to_string(counter) + " to " +
-                                channel->node};
-      channel->publish(message);
+      ::serialization::BlockSerializer blockSerializer{};
+      ::io::HeaderSerializer headerSerializer{};
+      ::common::itf::Message message1{::common::utils::Time::getTimeStamp(),
+                                      "message" + std::to_string(counter),
+                                      "author" + std::to_string(counter)};
+      ::common::itf::Message message2{::common::utils::Time::getTimeStamp(),
+                                      "message" + std::to_string(counter + 1),
+                                      "author" + std::to_string(counter + 1)};
+      std::vector<::common::itf::Message> messages{};
+      messages.push_back(message1);
+      messages.push_back(message2);
+      ::common::itf::Block block1{messages};
+      const auto serializedBlock = blockSerializer.serialize(block1);
+      ::io::Header header{::io::Operation::UPLOADING, configValue.self.name,
+                          block1.timestamp, block1.slot};
+      const auto serializedHeader = headerSerializer.serialize(header);
+      const auto mergedMessage = ::io::merge(serializedHeader, serializedBlock);
+
+      // spdlog::info("serializedHeader: {}", serializedHeader);
+      // spdlog::info("serializedBlock: {}", serializedBlock);
+      // spdlog::info("mergedMessage: {}", mergedMessage);
+      channel->publish(mergedMessage);
     }
     counter++;
   }

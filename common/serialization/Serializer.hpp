@@ -7,6 +7,7 @@
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/serialization/vector.hpp>
 
+//TODO: wrong namespace missing ::common
 namespace serialization {
 template <typename Data> class Serializer {
 public:
