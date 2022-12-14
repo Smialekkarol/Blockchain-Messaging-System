@@ -78,8 +78,8 @@ int main(int argc, char **argv) {
         const auto &content = ::io::split(msg.body());
         const auto &header = content.first;
         const auto &body = content.second;
-        // spdlog::info("header: {}", header);
-        // spdlog::info("body: {}", body);
+        spdlog::info("header: {}", header);
+        spdlog::info("body: {}", body);
 
         ::serialization::BlockSerializer blockSerializer{};
         ::io::HeaderSerializer headerSerializer{};
