@@ -45,10 +45,11 @@ int main(int argc, char **argv) {
   Buffer buffer{};
   Consumer consumer(configValue, buffer);
   ::slot::TimerWheel timerWheel{};
-  ::slot::SlotHandler slotHandler{redis, buffer, consumer};
-  timerWheel.subscribe([&redis, &buffer, &consumer]() {
-    std::thread t([=, &redis, &buffer, &consumer]() {
-      ::slot::SlotHandler slotHandler{redis, buffer, consumer};
+  ::io::ConnectionStore connectionStore{};
+  ::io::ChannelStore channelStore{};
+  timerWheel.subscribe([&redis, &buffer, &consumer, &channelStore]() {
+    std::thread t([=, &redis, &buffer, &consumer, &channelStore]() {
+      ::slot::SlotHandler slotHandler{redis, buffer, consumer, channelStore};
       slotHandler.handle();
     });
     t.detach();
@@ -60,9 +61,6 @@ int main(int argc, char **argv) {
       redis.save();
     }
   });
-
-  ::io::ConnectionStore connectionStore{};
-  ::io::ChannelStore channelStore{};
 
   connectionStore.push(configValue.self);
   const std::string &localAddress = configValue.self.address;
@@ -143,7 +141,8 @@ int main(int argc, char **argv) {
       messages.push_back(message2);
       ::common::itf::Block block1{messages};
       const auto serializedBlock = blockSerializer.serialize(block1);
-      ::io::Header header{::io::Operation::UPLOADING, configValue.self.name,
+      ::io::Header header{::io::ConsensusOperation::UPLOADING,
+                          configValue.self.name, configValue.self.address,
                           block1.timestamp, block1.slot};
       const auto serializedHeader = headerSerializer.serialize(header);
       const auto mergedMessage = ::io::merge(serializedHeader, serializedBlock);

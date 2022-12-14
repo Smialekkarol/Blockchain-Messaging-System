@@ -3,13 +3,14 @@
 #include <cstdint>
 #include <string>
 
+#include "ConsensusOperation.hpp"
+
 namespace io {
 
-enum class Operation : std::uint16_t { ELECTION, UPLOADING, BROADCAST };
-
 struct Header {
-  Operation operation{Operation::ELECTION};
+  ConsensusOperation operation{ConsensusOperation::ELECTION};
   std::string node{};
+  std::string address{};
   uint64_t timestamp{0};
   uint64_t slot{0};
 };
@@ -21,6 +22,7 @@ template <class Archive>
 void serialize(Archive &archive, ::io::Header &header,
                const unsigned int version) {
   archive &header.operation;
+  archive &header.address;
   archive &header.node;
   archive &header.timestamp;
   archive &header.slot;

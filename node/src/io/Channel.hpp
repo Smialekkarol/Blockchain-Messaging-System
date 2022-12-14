@@ -3,13 +3,14 @@
 #include <functional>
 #include <unordered_map>
 
+#include "ChannelType.hpp"
 #include "ConnectionData.hpp"
 
 namespace io {
 class Channel {
 public:
   Channel(const ::io::ConnectionData &connectionData,
-          const std::string &type = "DEFAULT");
+          const ChannelType type = ChannelType::NODE);
   Channel(const ::io::Channel &other) = delete;
   Channel &operator=(const ::io::Channel &other) = delete;
   Channel(::io::Channel &&other) = default;
@@ -21,7 +22,7 @@ public:
                    consumeHandler);
   void publish(const std::string &message);
 
-  std::string type{};
+  ChannelType type{};
   std::string node{};
   std::string queue{};
 

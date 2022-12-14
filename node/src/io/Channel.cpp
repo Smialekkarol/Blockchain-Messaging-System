@@ -5,8 +5,9 @@
 namespace io {
 
 Channel::Channel(const ::io::ConnectionData &connectionData,
-                 const std::string &type)
-    : node{connectionData.node}, type{type}, queue{node + "_" + type},
+                 const ChannelType type)
+    : node{connectionData.node}, type{type},
+      queue{node + "_" + std::to_string(static_cast<std::uint16_t>(type))},
       channel{connectionData.connection.get()} {
   setupChannelErrorHandling();
   declareQueue();

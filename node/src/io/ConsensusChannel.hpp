@@ -6,6 +6,6 @@ namespace io {
 class ConsensusChannel : public Channel {
 public:
   ConsensusChannel(const ::io::ConnectionData &connectionData)
-      : Channel(connectionData, "CONSENSUS") {}
+      : Channel(connectionData, ChannelType::CONSENSUS) {}
 };
 } // namespace io
