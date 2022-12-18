@@ -4,17 +4,16 @@
 
 namespace client
 {
-using namespace common;
 
 class AmqpHandler
 {
 public:
-    AmqpHandler(std::string address);
+    AmqpHandler(const std::string & address);
     ~AmqpHandler();
-    void createQueue(std::string que);
-    void send(std::string que, std::string message);
-    AmqpHandler& receive(std::string que, common::Buffer<std::string>& buffer);
+    void createQueue(const std::string & queue);
+    void sendMessage(const std::string & queue, const std::string & message);
     void runEventLoop();
+    AmqpHandler& receive(const std::string & queue, common::Buffer<std::string>& buffer);
 
 private:
     struct ev_loop* loop;
