@@ -7,6 +7,7 @@
 // clang-format on
 
 #include <mutex>
+#include <optional>
 
 #include <sw/redis++/redis++.h>
 
@@ -24,6 +25,9 @@ public:
                 const std::string &blockchain);
   void update(const ::common::itf::Block &block, const long long index,
               const std::string &blockchain);
+  void remove(const ::common::itf::Block &block, const std::string &blockchain);
+
+  std::optional<::common::itf::Block> getByIndex(const int index, const std::string &blockchain);
 
   std::vector<::common::itf::Block> get(const std::string &blockchain,
                                         const int numberOfBlocks = 1);

@@ -37,4 +37,5 @@ include_directories(.)
 
 add_subdirectory(db)
 add_subdirectory(slot)
+add_subdirectory(io)
 add_subdirectory(ut)
