@@ -8,7 +8,7 @@ cmake --build build -j $(nproc)
 # How to run
 Change directory to the Blockchain-Private.
 
-./build/client/src/user NodeA Karol
+cd build/client/src && ./user NodeA Karol
 
 First argument is ID of the Node
 second argument is client name

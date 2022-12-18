@@ -22,9 +22,16 @@ ConsensusStorage::findValidator(const std::uint64_t slot) {
   return {};
 }
 
+void ConsensusStorage::clearSlot(const std::uint64_t slot) {
+  std::scoped_lock lock(mutex);
+  for (auto &[_, slotContexts] : contexts) {
+    slotContexts.erase(slot);
+  }
+}
+
 void ConsensusStorage::addContext(const std::string &address,
-                                  const std::uint64_t slot,
-                                  const std::string &node) {
+                                  const std::string &node,
+                                  const std::uint64_t slot) {
   std::scoped_lock lock(mutex);
   contexts[address][slot].node = node;
 }

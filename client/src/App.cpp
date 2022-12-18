@@ -16,7 +16,7 @@ int main(int argc, char** argv)
     const auto& serverName = argv[1];
     const auto& clientName = argv[2];
 
-    const std::string & nodeAddress = readNodes("../../../Client/src/Nodes.yaml", serverName);
+    const std::string & nodeAddress = readNodes("Nodes.yaml", serverName);
 
     client::ClientInfo clientInfo(nodeAddress, serverName, clientName);
     client::Client client(clientInfo);

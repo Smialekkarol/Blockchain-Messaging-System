@@ -1,13 +1,18 @@
 #include "common/itf/Constants.hpp"
 
+#include "node/src/io/ContributionWrapper.hpp"
+#include "node/src/io/Utils.hpp"
+
 #include "SlotHandler.hpp"
 
 namespace slot {
 
-SlotHandler::SlotHandler(::db::RedisDB &redis_, Buffer &buffer_,
+SlotHandler::SlotHandler(const ::common::NodeInfo &nodeInfo_,
+                         ::db::ConsensusStorage &consensusStorage_,
+                         ::db::RedisDB &redis_, Buffer &buffer_,
                          Consumer &consumer_, ::io::ChannelStore &channelStore_)
-    : redis{redis_}, buffer{buffer_}, consumer{consumer_}, channelStore{
-                                                               channelStore_} {}
+    : nodeInfo{nodeInfo_}, consensusStorage{consensusStorage_}, redis{redis_},
+      buffer{buffer_}, consumer{consumer_}, channelStore{channelStore_} {}
 
 void SlotHandler::handle() {
   shouldCallNextHandler = true;
@@ -26,13 +31,35 @@ void SlotHandler::savePendingBlock() {
     const auto blockchainSize =
         redis.add(this->block.value(), ::common::itf::DEFAULT_BLOCKAIN);
     blockIndex = blockchainSize - 1;
+    this->header = {::io::ConsensusOperation::INSPECTION, nodeInfo.name,
+                    nodeInfo.address, this->block.value().timestamp,
+                    this->block.value().slot};
+    this->serializedHeader = headerSerializer.serialize(header);
+    this->contributionWrapper = {true};
   } else {
     ::common::itf::Block emptyBlock{};
+    this->contributionWrapper = {false};
+    this->header = {::io::ConsensusOperation::INSPECTION, nodeInfo.name,
+                    nodeInfo.address, emptyBlock.timestamp, emptyBlock.slot};
+    this->serializedHeader = headerSerializer.serialize(header);
     const auto blockchainSize =
         redis.add(emptyBlock, ::common::itf::DEFAULT_BLOCKAIN);
     blockIndex = blockchainSize - 1;
   }
+
+  const auto &message =
+      ::io::merge(serializedHeader,
+                  contributionWrapperSerializer.serialize(contributionWrapper));
+
+  const auto &consensusChannels =
+      channelStore.getRemote(::io::ChannelType::CONSENSUS);
+
+  for (auto *channel : consensusChannels) {
+    channel->publish(message);
+  }
 };
+
+void SlotHandler::notifyNodesAboutPendingBlock() {}
 
 void SlotHandler::waitForNodesInspection() {
   // TODO: Provide waiting implementation
@@ -52,6 +79,7 @@ void SlotHandler::removePendingBlock() {
 void SlotHandler::saveCompleteBlock() {
   block.value().state = ::common::itf::BlockState::COMPLETED;
   redis.update(block.value(), blockIndex, ::common::itf::DEFAULT_BLOCKAIN);
+  consensusStorage.clearSlot(header.slot);
 }
 
 void SlotHandler::publishBlock() { consumer.publish(block.value()); }

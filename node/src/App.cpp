@@ -1,22 +1,25 @@
-#include "Buffer.hpp"
-#include "ConfigurationReader.hpp"
-#include "Consumer.hpp"
-#include "common/NodeConfiguration.hpp"
-#include "common/utils/Time.hpp"
-#include "db/RedisDB.hpp"
-#include "slot/SlotHandler.hpp"
-#include "slot/TimerWheel.hpp"
 #include <spdlog/spdlog.h>
+
+#include "common/NodeConfiguration.hpp"
+#include "common/serialization/BlockSerializer.hpp"
+#include "common/utils/Time.hpp"
+
+#include "db/ConsensusStorage.hpp"
+#include "db/RedisDB.hpp"
 
 #include "io/ChannelStore.hpp"
 #include "io/ConnectionStore.hpp"
 #include "io/ConsensusChannel.hpp"
-
-#include "common/serialization/BlockSerializer.hpp"
+#include "io/ContributionWrapperSerializer.hpp"
 #include "io/HeaderSerializer.hpp"
 #include "io/Utils.hpp"
 
-#include "utils/Time.hpp"
+#include "slot/SlotHandler.hpp"
+#include "slot/TimerWheel.hpp"
+
+#include "Buffer.hpp"
+#include "ConfigurationReader.hpp"
+#include "Consumer.hpp"
 
 void logConfiguration(const common::NodeConfiguration &config) {
   const auto &nodes{config.nodes};
@@ -41,14 +44,19 @@ int main(int argc, char **argv) {
   logConfiguration(configValue);
 
   ::db::RedisDB redis{};
+  ::db::ConsensusStorage consensusStorage{};
   Buffer buffer{};
   Consumer consumer(configValue, buffer);
   ::slot::TimerWheel timerWheel{};
   ::io::ConnectionStore connectionStore{};
   ::io::ChannelStore channelStore{};
-  timerWheel.subscribe([&redis, &buffer, &consumer, &channelStore]() {
-    std::thread t([=, &redis, &buffer, &consumer, &channelStore]() {
-      ::slot::SlotHandler slotHandler{redis, buffer, consumer, channelStore};
+  timerWheel.subscribe([&configValue, &consensusStorage, &redis, &buffer,
+                        &consumer, &channelStore]() {
+    std::thread t([=, &consensusStorage, &configValue, &redis, &buffer,
+                   &consumer, &channelStore]() {
+      ::slot::SlotHandler slotHandler{
+          configValue.self, consensusStorage, redis,
+          buffer,           consumer,         channelStore};
       slotHandler.handle();
     });
     t.detach();
@@ -65,12 +73,45 @@ int main(int argc, char **argv) {
   const std::string &localAddress = configValue.self.address;
   auto localConsensusChannel = std::make_unique<::io::ConsensusChannel>(
       connectionStore.get(localAddress));
-  localConsensusChannel.get()->consume(
-      [localNodeInfo = configValue.self](const AMQP::Message &msg, uint64_t tag,
-                                         bool redelivered) {
-        spdlog::info("[{}]{} Received: {}", localNodeInfo.address,
-                     localNodeInfo.name, msg.body());
-      });
+  localConsensusChannel.get()->consume([localNodeInfo = configValue.self,
+                                        &consensusStorage](
+                                           const AMQP::Message &msg,
+                                           uint64_t tag, bool redelivered) {
+    const auto &content = ::io::split(msg.body());
+    const auto &header = content.first;
+    const auto &body = content.second;
+    ::io::HeaderSerializer headerSerializer{};
+    const auto &deserializedHeader = headerSerializer.deserialize(header);
+
+    if (deserializedHeader.operation != ::io::ConsensusOperation::INSPECTION) {
+      spdlog::error("[{}]{} Received unsupported operation: {}",
+                    localNodeInfo.address, localNodeInfo.name,
+                    static_cast<std::uint16_t>(deserializedHeader.operation));
+      return;
+    }
+
+    if (deserializedHeader.operation == ::io::ConsensusOperation::INSPECTION) {
+      ::io::ContributionWrapperSerializer contributionWrapperSerializer{};
+      const auto &contributionWrapper =
+          contributionWrapperSerializer.deserialize(body);
+      if (contributionWrapper.isContributing) {
+        spdlog::info(
+            "[{}]{} Received: operation {}, node {}, address {} , timestamp "
+            "{} , slot {} , isContributing {}",
+            localNodeInfo.address, localNodeInfo.name,
+            static_cast<std::uint16_t>(deserializedHeader.operation),
+            deserializedHeader.node, deserializedHeader.address,
+            deserializedHeader.timestamp, deserializedHeader.slot,
+            contributionWrapper.isContributing);
+      }
+      consensusStorage.addContext(deserializedHeader.address,
+                                  deserializedHeader.node,
+                                  deserializedHeader.slot);
+      consensusStorage.setContribution(deserializedHeader.address,
+                                       deserializedHeader.slot,
+                                       contributionWrapper.isContributing);
+    }
+  });
 
   channelStore.pushLocal(localAddress, std::move(localConsensusChannel));
 

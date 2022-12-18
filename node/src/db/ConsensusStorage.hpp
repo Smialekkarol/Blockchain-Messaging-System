@@ -20,8 +20,10 @@ public:
   std::optional<bool> isContributing(const std::string &address,
                                      const std::uint64_t slot);
   std::optional<ConsensusContext> findValidator(const std::uint64_t slot);
-  void addContext(const std::string &address, const std::uint64_t slot,
-                  const std::string &node);
+  void clearSlot(const std::uint64_t slot);
+
+  void addContext(const std::string &address, const std::string &node,
+                  const std::uint64_t slot);
   void setContribution(const std::string &address, const std::uint64_t slot,
                        bool isContributing);
   void markValidator(const std::string &address, const std::uint64_t slot);

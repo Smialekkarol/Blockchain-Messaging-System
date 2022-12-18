@@ -8,7 +8,7 @@
 namespace io {
 
 struct Header {
-  ConsensusOperation operation{ConsensusOperation::ELECTION};
+  ConsensusOperation operation{ConsensusOperation::INSPECTION};
   std::string node{};
   std::string address{};
   uint64_t timestamp{0};
