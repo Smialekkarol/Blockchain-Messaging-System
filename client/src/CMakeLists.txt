@@ -22,3 +22,5 @@ target_link_libraries(user PRIVATE
             pthread
             amqpcpp 
             ev)
+
+add_subdirectory(ui)
