@@ -27,4 +27,3 @@ target_link_libraries(user PRIVATE
             spdlog::spdlog
             ${YAML_CPP_LIBRARIES})
 
-add_subdirectory(ui)
