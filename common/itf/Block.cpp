@@ -3,7 +3,9 @@
 #include "Block.hpp"
 
 namespace common::itf {
-Block::Block() = default;
+Block::Block()
+    : timestamp{::common::utils::Time::getTimeStamp()},
+      slot{::common::utils::Time::getSlot(timestamp)} {}
 
 Block::Block(const std::vector<Message> &data_)
     : timestamp{::common::utils::Time::getTimeStamp()},

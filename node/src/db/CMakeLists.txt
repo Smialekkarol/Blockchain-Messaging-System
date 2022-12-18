@@ -2,6 +2,7 @@ if(NOT ENABLE_UNIT_TESTS)
     set(DB_DIR "${CMAKE_CURRENT_SOURCE_DIR}")
     set(DB_SOURCES 
         ${DB_DIR}/RedisDB.cpp
+        ${DB_DIR}/ConsensusStorage.cpp
     )
 
     target_include_directories(node PRIVATE .)

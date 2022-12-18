@@ -8,6 +8,16 @@
 #include "slot/TimerWheel.hpp"
 #include <spdlog/spdlog.h>
 
+#include "io/ChannelStore.hpp"
+#include "io/ConnectionStore.hpp"
+#include "io/ConsensusChannel.hpp"
+
+#include "common/serialization/BlockSerializer.hpp"
+#include "io/HeaderSerializer.hpp"
+#include "io/Utils.hpp"
+
+#include "utils/Time.hpp"
+
 void logConfiguration(const common::NodeConfiguration &config) {
   const auto &nodes{config.nodes};
   spdlog::info("Loaded {} node(s)", nodes.size());
@@ -30,15 +40,15 @@ int main(int argc, char **argv) {
   const auto &configValue = config.value();
   logConfiguration(configValue);
 
-
   ::db::RedisDB redis{};
   Buffer buffer{};
   Consumer consumer(configValue, buffer);
   ::slot::TimerWheel timerWheel{};
-  ::slot::SlotHandler slotHandler{redis, buffer, consumer};
-  timerWheel.subscribe([&redis, &buffer, &consumer]() {
-    std::thread t([=, &redis, &buffer, &consumer]() {
-      ::slot::SlotHandler slotHandler{redis, buffer, consumer};
+  ::io::ConnectionStore connectionStore{};
+  ::io::ChannelStore channelStore{};
+  timerWheel.subscribe([&redis, &buffer, &consumer, &channelStore]() {
+    std::thread t([=, &redis, &buffer, &consumer, &channelStore]() {
+      ::slot::SlotHandler slotHandler{redis, buffer, consumer, channelStore};
       slotHandler.handle();
     });
     t.detach();
@@ -50,9 +60,39 @@ int main(int argc, char **argv) {
       redis.save();
     }
   });
-  timerWheel.start();
 
-  std::thread{ [&consumer]() { consumer.run(); } }.detach();
+  connectionStore.push(configValue.self);
+  const std::string &localAddress = configValue.self.address;
+  auto localConsensusChannel = std::make_unique<::io::ConsensusChannel>(
+      connectionStore.get(localAddress));
+  localConsensusChannel.get()->consume(
+      [localNodeInfo = configValue.self](const AMQP::Message &msg, uint64_t tag,
+                                         bool redelivered) {
+        spdlog::info("[{}]{} Received: {}", localNodeInfo.address,
+                     localNodeInfo.name, msg.body());
+      });
+
+  channelStore.pushLocal(localAddress, std::move(localConsensusChannel));
+
+  for (const auto &node : configValue.nodes) {
+    connectionStore.push(node);
+    const std::string &remoteAddress = node.address;
+    auto remoteConsensusChannel = std::make_unique<::io::ConsensusChannel>(
+        connectionStore.get(remoteAddress));
+    channelStore.pushRemote(remoteAddress, std::move(remoteConsensusChannel));
+  }
+
+  for (auto &item : connectionStore.get()) {
+    std::thread t([=, &item]() {
+      auto *loop = item.second.loop;
+      auto *connection = item.second.connection.get();
+      ev_run(loop, 0);
+    });
+    t.detach();
+  }
+
+  timerWheel.start();
+  std::thread{[&consumer]() { consumer.run(); }}.detach();
 
   while (true) {
   }
