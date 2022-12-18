@@ -12,3 +12,9 @@ Change directory to the Blockchain-Private.
 
 First argument is ID of the Node
 second argument is client name
+
+# how to run rabbitmq in the background 
+service rabbitmq-server start
+
+# how to run redis server in the background
+redis-server --daemonize yes

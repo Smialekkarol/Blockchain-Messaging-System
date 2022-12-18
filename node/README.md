@@ -17,3 +17,10 @@ Comands to create needed user for each node.
 rabbitmqctl add_user user1 user1
 rabbitmqctl set_user_tags user1 administrator
 rabbitmqctl set_permissions -p / user1 ".*" ".*" ".*"
+
+
+# how to run rabbitmq in the background 
+service rabbitmq-server start
+
+# how to run redis server in the background
+redis-server --daemonize yes
