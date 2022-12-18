@@ -7,15 +7,15 @@
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/serialization/vector.hpp>
 
-//TODO: wrong namespace missing ::common
+// TODO: wrong namespace missing ::common
 namespace serialization {
 template <typename Data> class Serializer {
 public:
   Serializer() = default;
 
   std::string serialize(const Data &data) {
-    boost::archive::text_oarchive textOutputArchive{ss, boost::archive::archive_flags::no_header};
-    ss.str("");
+    std::stringstream ss{};
+    boost::archive::text_oarchive textOutputArchive{ss};
     textOutputArchive << data;
     return ss.str();
   }
@@ -28,10 +28,10 @@ public:
   }
 
   Data deserialize(const std::string &data) {
-    ss.str("");
+    std::stringstream ss{};
     Data deserializedBlock{};
     ss.str(data);
-    boost::archive::text_iarchive inputTextArchive{ss, boost::archive::archive_flags::no_header};
+    boost::archive::text_iarchive inputTextArchive{ss};
     inputTextArchive >> deserializedBlock;
     return deserializedBlock;
   }
@@ -42,8 +42,5 @@ public:
                    [&](const std::string &b) { return deserialize(b); });
     return deserializedBlocks;
   }
-
-private:
-      std::stringstream ss;
 };
 } // namespace serialization

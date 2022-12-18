@@ -1,6 +1,7 @@
 #pragma once
 
 #include <functional>
+#include <optional>
 #include <vector>
 
 #include "db/RedisDB.hpp"
@@ -19,6 +20,7 @@ public:
 private:
   void savePendingBlock();
   void waitForNodesInspection();
+  void removePendingBlock();
   void saveCompleteBlock();
   void publishBlock();
 
@@ -27,10 +29,11 @@ private:
   Consumer &consumer;
   ::io::ChannelStore &channelStore;
   long long blockIndex{0};
-  ::common::itf::Block block{};
+  std::optional<::common::itf::Block> block{};
   bool shouldCallNextHandler{true};
   std::vector<std::function<void()>> handlers{
       [this]() { savePendingBlock(); }, [this]() { waitForNodesInspection(); },
-      [this]() { saveCompleteBlock(); }, [this]() { publishBlock(); }};
+      [this]() { removePendingBlock(); }, [this]() { saveCompleteBlock(); },
+      [this]() { publishBlock(); }};
 };
 } // namespace slot
