@@ -2,7 +2,7 @@
 
 namespace client
 {
-AmqpHandler::AmqpHandler(std::string address)
+AmqpHandler::AmqpHandler(const std::string & address)
     : loop(ev_loop_new(0))
     , handler(loop)
     , connection(&handler, AMQP::Address(address))
@@ -16,15 +16,16 @@ AmqpHandler::AmqpHandler(std::string address)
 
 AmqpHandler::~AmqpHandler()
 {
+    connection.close();
     ev_loop_destroy(loop);
 }
 
-void AmqpHandler::createQueue(std::string que)
+void AmqpHandler::createQueue(const std::string & queue)
 {
-    channel.declareQueue(que, AMQP::durable)
+    channel.declareQueue(queue, AMQP::durable)
         .onSuccess([this](const std::string& name, uint32_t messagecount, uint32_t consumercount)
             {
-                spdlog::debug("que " + name + " created");
+                spdlog::debug("queue " + name + " created");
                 ev_break(loop, EVBREAK_ONE);
             })
         .onError([](const char* message)
@@ -34,18 +35,18 @@ void AmqpHandler::createQueue(std::string que)
     ev_run(loop, 0);
 }
 
-void AmqpHandler::send(std::string que, std::string message)
+void AmqpHandler::sendMessage(const std::string & queue, const std::string & message)
 {
     struct ev_loop* loop = ev_loop_new();
-    channel.publish("", que, message);
+    channel.publish("", queue, message);
     ev_run(loop, 0);
 }
 
-AmqpHandler& AmqpHandler::receive(std::string que, common::Buffer<std::string>& buffer)
+AmqpHandler& AmqpHandler::receive(const std::string & queue, common::Buffer<std::string>& buffer)
 {
     std::string message{};
     struct ev_loop* loop = ev_loop_new();
-    channel.consume(que, AMQP::noack)
+    channel.consume(queue, AMQP::noack)
         .onReceived([this, &buffer](const AMQP::Message& msg, uint64_t tag, bool redelivered)
             {
                 buffer.pushBack(msg.body());

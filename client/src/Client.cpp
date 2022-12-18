@@ -1,4 +1,4 @@
-#include "ClientAMQP.hpp"
+#include "Client.hpp"
 #include "common/utils/Time.hpp"
 #include "common/utils/Timestamp.hpp"
 #include "common/utils/Text.hpp"
@@ -6,21 +6,20 @@
 namespace client
 {
 
-ClientAMQP::ClientAMQP(ClientInfo& clientInfo)
+Client::Client(ClientInfo& clientInfo)
     : clientInfo(clientInfo)
-    , amqpHandler("amqp://localhost/")
+    , amqpHandler(clientInfo.host)
 {
-    channelStore.addChannel(ClientChannel(clientInfo.clientName));
     std::string queName{ clientInfo.clientName + "_ClientChannel" };
     amqpHandler.createQueue(queName);
     listen(queName);
 }
 
-ClientAMQP::~ClientAMQP()
+Client::~Client()
 {
 }
 
-void ClientAMQP::makeInitialConnection(const std::string& queToBeCreated)
+void Client::createQueue(const std::string& queToBeCreated)
 {
     try
     {
@@ -32,7 +31,7 @@ void ClientAMQP::makeInitialConnection(const std::string& queToBeCreated)
             common::utils::Timestamp::get(), queToBeCreated, clientInfo.clientName);
 
         const std::string & data = serializeData(header, message);
-        amqpHandler.send(queName, data);
+        amqpHandler.sendMessage(queName, data);
     }
     catch (const std::exception& e)
     {
@@ -40,7 +39,7 @@ void ClientAMQP::makeInitialConnection(const std::string& queToBeCreated)
     }
 }
 
-void ClientAMQP::sendMessage(const std::string& queName, const std::string& dataToSend)
+void Client::sendMessage(const std::string& queName, const std::string& dataToSend)
 {
     try
     {
@@ -49,9 +48,7 @@ void ClientAMQP::sendMessage(const std::string& queName, const std::string& data
             common::utils::Timestamp::get(), dataToSend, clientInfo.clientName);
 
         const std::string& data = serializeData(header, message);
-
-
-        amqpHandler.send(queName, data);
+        amqpHandler.sendMessage(queName, data);
     }
     catch (const std::exception& e)
     {
@@ -59,12 +56,12 @@ void ClientAMQP::sendMessage(const std::string& queName, const std::string& data
     }
 }
 
-void ClientAMQP::getData(const std::string& queName, const std::string& RequestData)
+std::vector<common::itf::Message> Client::getMessages(const std::string& queName, const std::string& RequestData)
 {
     try
     {
         common::itf::Header header(
-            "GetHistory", clientInfo.serverName, queName, clientInfo.clientName);
+            "getMessages", clientInfo.serverName, queName, clientInfo.clientName);
         common::itf::Message message(
             common::utils::Timestamp::get(), RequestData, clientInfo.clientName);
 
@@ -74,14 +71,15 @@ void ClientAMQP::getData(const std::string& queName, const std::string& RequestD
     {
         spdlog::error(e.what());
     }
+    return {};
 }
 
-void ClientAMQP::listen(const std::string& que)
+void Client::listen(const std::string& queue)
 {
     std::thread{
-        [this, que]()
+        [this, queue]()
         {
-            AmqpHandler("amqp://localhost/").receive(que, buffer).runEventLoop();
+           amqpHandler.receive(queue, buffer).runEventLoop();
         }
     }.detach();
 
@@ -104,7 +102,7 @@ void ClientAMQP::listen(const std::string& que)
     timer.setInterval(handleBufferedData, 200);
 }
 
-std::string ClientAMQP::serializeData(common::itf::Header& header, common::itf::Message& message)
+std::string Client::serializeData(common::itf::Header& header, common::itf::Message& message)
 {
     return headerSerializer.serialize(header) + "@" + messageSerializer.serialize(message) + "\n";
 }

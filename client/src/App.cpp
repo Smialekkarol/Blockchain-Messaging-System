@@ -1,26 +1,25 @@
 #include "Utils.hpp"
 #include <iostream>
-#include "ClientAMQP.hpp"
+#include "Client.hpp"
 
 
 int main(int argc, char** argv)
 {
-    if (argc != 5)
+    if (argc != 3)
     {
-        std::cerr << "Usage: Client <host> <port> <ServerName> <ClientName>\n"
+        std::cerr << "Usage: Client <ServerName> <ClientName>\n"
                   << "Example:\n"
-                  << "    ./Client 127.0.0.1 8080 NodeA ClientName";
+                  << "    ./Client NodeA ClientName";
         return EXIT_FAILURE;
     }
 
-    const std::string& host = argv[1];
-    const auto& port = argv[2];
-    const auto& serverName = argv[3];
-    const auto& clientName = argv[4];
+    const auto& serverName = argv[1];
+    const auto& clientName = argv[2];
 
+    const std::string & nodeAddress = readNodes("../../../Client/src/Nodes.yaml", serverName);
 
-    client::ClientInfo clientInfo(host, port, serverName, clientName);
-    client::ClientAMQP client(clientInfo);
+    client::ClientInfo clientInfo(nodeAddress, serverName, clientName);
+    client::Client client(clientInfo);
 
     std::string command{};
 
@@ -41,7 +40,7 @@ int main(int argc, char** argv)
             if (args.size() == 2)
             {
                 const auto& queToBeCreated = args[1];
-                client.makeInitialConnection(queToBeCreated);
+                client.createQueue(queToBeCreated);
             }
             else
                 std::cout << "initChannel: <queToBeCreated>\n";
@@ -59,16 +58,16 @@ int main(int argc, char** argv)
                 std::cout << "send: <queName> <message>\n";
         }
 
-        if (operation.compare("getdata") == 0)
+        if (operation.compare("getMessages") == 0)
         {
             if (args.size() == 3)
             {
                 const auto& queName = args[1];
                 const auto& date = args[2];
-                client.getData(queName, date);
+                client.getMessages(queName, date);
             }
             else
-                std::cout << "getData: <queName> <date>\n";
+                std::cout << "getMessages: <queName> <date>\n";
         }
 
         else if (operation.compare("exit") == 0)
