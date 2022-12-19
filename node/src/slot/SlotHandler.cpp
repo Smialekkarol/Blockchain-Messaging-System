@@ -2,8 +2,9 @@
 
 #include "common/itf/Constants.hpp"
 
-#include "node/src/io/ContributionWrapper.hpp"
-#include "node/src/io/Utils.hpp"
+#include "ContributionNotifier.hpp"
+#include "InspectionWaiter.hpp"
+#include "PendingBlockSaver.hpp"
 
 #include "SlotHandler.hpp"
 
@@ -28,103 +29,45 @@ void SlotHandler::handle() {
 }
 
 void SlotHandler::savePendingBlock() {
-  buffer.save();
-  if (const auto b = buffer.pop(); b.has_value()) {
-    context.block = b.value();
-    const auto blockchainSize =
-        redis.add(context.block.value(), ::common::itf::DEFAULT_BLOCKAIN);
-    context.blockIndex = blockchainSize - 1;
-    context.header = {::io::ConsensusOperation::INSPECTION,
-                      context.nodeConfiguration.self.name,
-                      context.nodeConfiguration.self.address,
-                      context.block.value().timestamp,
-                      context.block.value().slot};
-    context.serializedHeader = headerSerializer.serialize(context.header);
-    context.contributionWrapper = {true};
-  } else {
-    ::common::itf::Block emptyBlock{};
-    context.contributionWrapper = {false};
-    context.header = {::io::ConsensusOperation::INSPECTION,
-                      context.nodeConfiguration.self.name,
-                      context.nodeConfiguration.self.address,
-                      emptyBlock.timestamp, emptyBlock.slot};
-    context.serializedHeader = headerSerializer.serialize(context.header);
-    const auto blockchainSize =
-        redis.add(emptyBlock, ::common::itf::DEFAULT_BLOCKAIN);
-    context.blockIndex = blockchainSize - 1;
-  }
-
-  const auto &message = ::io::merge(
-      context.serializedHeader,
-      contributionWrapperSerializer.serialize(context.contributionWrapper));
-
-  const auto &consensusChannels =
-      channelStore.getRemote(::io::ChannelType::CONSENSUS);
-
-  for (auto *channel : consensusChannels) {
-    channel->publish(message);
-  }
+  PendingBlockSaver PendingBlockSaver{context, redis, buffer};
+  PendingBlockSaver.save();
 };
 
-void SlotHandler::notifyNodesAboutPendingBlock() {}
+void SlotHandler::notifyNodesAboutContribution() {
+  ContributionNotifier contributionNotifier{context, channelStore};
+  contributionNotifier.notify();
+}
 
 void SlotHandler::waitForNodesInspection() {
+  InspectionWaiter inspectionWaiter{context, consensusStorage};
+  inspectionWaiter.wait();
+}
+
+void SlotHandler::removePendingBlockIfNoOneIsContributing() {
   const auto slot = context.header.slot;
-  std::unordered_map<std::string, std::optional<bool>> confirmedContributions{};
-  confirmedContributions[context.nodeConfiguration.self.address] =
-      context.block.has_value();
-  for (const auto &node : context.nodeConfiguration.nodes) {
-    confirmedContributions[node.address] = {};
-  }
-
-  const auto areAllValuesWithoutValues =
-      std::all_of(confirmedContributions.begin(), confirmedContributions.end(),
-                  [](const auto &pair) { return !pair.second.has_value(); });
-
-  while (!areAllContributorsConfirmed(confirmedContributions)) {
-    for (const auto &node : context.nodeConfiguration.nodes) {
-      if (const auto &contribution =
-              consensusStorage.isContributing(node.address, slot);
-          contribution.has_value()) {
-        confirmedContributions[node.address] = contribution.value();
-      }
-    }
-  }
-
+  const auto &nodes = context.nodeConfiguration.nodes;
   const auto isAnyNodeContributing =
-      std::any_of(confirmedContributions.begin(), confirmedContributions.end(),
-                  [](const auto &pair) { return pair.second.value(); });
+      std::any_of(
+          nodes.begin(), nodes.end(),
+          [this, slot](const auto &node) {
+            return consensusStorage.isContributing(node.address, slot).value();
+          }) ||
+      context.contributionWrapper.isContributing;
 
   if (!isAnyNodeContributing) {
-    removePendingBlock();
+    const auto &b =
+        redis.getByIndex(context.blockIndex, ::common::itf::DEFAULT_BLOCKAIN);
+    redis.remove(b.value(), ::common::itf::DEFAULT_BLOCKAIN);
     context.shouldCallNextHandler = false;
   }
-
-  if (!context.block.has_value()) {
-    context.shouldCallNextHandler = false;
-  }
-}
-
-bool SlotHandler::areAllContributorsConfirmed(
-    const std::unordered_map<std::string, std::optional<bool>>
-        &confirmedContributors) const {
-  return std::all_of(confirmedContributors.begin(), confirmedContributors.end(),
-                     [](const auto &pair) { return pair.second.has_value(); });
-}
-
-void SlotHandler::removePendingBlock() {
-
-  const auto &b =
-      redis.getByIndex(context.blockIndex, ::common::itf::DEFAULT_BLOCKAIN);
-  redis.remove(b.value(), ::common::itf::DEFAULT_BLOCKAIN);
 }
 
 void SlotHandler::saveCompleteBlock() {
-  context.block.value().state = ::common::itf::BlockState::COMPLETED;
-  redis.update(context.block.value(), context.blockIndex,
+  context.block.state = ::common::itf::BlockState::COMPLETED;
+  redis.update(context.block, context.blockIndex,
                ::common::itf::DEFAULT_BLOCKAIN);
   consensusStorage.clearSlot(context.header.slot);
 }
 
-void SlotHandler::publishBlock() { consumer.publish(context.block.value()); }
+void SlotHandler::publishBlock() { consumer.publish(context.block); }
 } // namespace slot

@@ -16,7 +16,7 @@ struct SlotContext {
   ::io::Header header{};
   std::string serializedHeader{};
   long long blockIndex{0};
-  std::optional<::common::itf::Block> block{};
+  ::common::itf::Block block{};
   bool shouldCallNextHandler{true};
 };
 } // namespace slot
