@@ -8,19 +8,19 @@
 #include "SlotHandler.hpp"
 
 namespace slot {
-
 SlotHandler::SlotHandler(const common::NodeConfiguration &nodeConfiguration_,
                          ::db::ConsensusStorage &consensusStorage_,
                          ::db::RedisDB &redis_, Buffer &buffer_,
                          Consumer &consumer_, ::io::ChannelStore &channelStore_)
-    : nodeConfiguration{nodeConfiguration_},
-      consensusStorage{consensusStorage_}, redis{redis_}, buffer{buffer_},
-      consumer{consumer_}, channelStore{channelStore_} {}
+    : consensusStorage{consensusStorage_}, redis{redis_}, buffer{buffer_},
+      consumer{consumer_}, channelStore{channelStore_} {
+  context.nodeConfiguration = nodeConfiguration_;
+}
 
 void SlotHandler::handle() {
-  shouldCallNextHandler = true;
+  context.shouldCallNextHandler = true;
   for (const auto handler : handlers) {
-    if (!shouldCallNextHandler) {
+    if (!context.shouldCallNextHandler) {
       break;
     }
     handler();
@@ -30,30 +30,33 @@ void SlotHandler::handle() {
 void SlotHandler::savePendingBlock() {
   buffer.save();
   if (const auto b = buffer.pop(); b.has_value()) {
-    this->block = b.value();
+    context.block = b.value();
     const auto blockchainSize =
-        redis.add(this->block.value(), ::common::itf::DEFAULT_BLOCKAIN);
-    blockIndex = blockchainSize - 1;
-    this->header = {::io::ConsensusOperation::INSPECTION,
-                    nodeConfiguration.self.name, nodeConfiguration.self.address,
-                    this->block.value().timestamp, this->block.value().slot};
-    this->serializedHeader = headerSerializer.serialize(header);
-    this->contributionWrapper = {true};
+        redis.add(context.block.value(), ::common::itf::DEFAULT_BLOCKAIN);
+    context.blockIndex = blockchainSize - 1;
+    context.header = {::io::ConsensusOperation::INSPECTION,
+                      context.nodeConfiguration.self.name,
+                      context.nodeConfiguration.self.address,
+                      context.block.value().timestamp,
+                      context.block.value().slot};
+    context.serializedHeader = headerSerializer.serialize(context.header);
+    context.contributionWrapper = {true};
   } else {
     ::common::itf::Block emptyBlock{};
-    this->contributionWrapper = {false};
-    this->header = {::io::ConsensusOperation::INSPECTION,
-                    nodeConfiguration.self.name, nodeConfiguration.self.address,
-                    emptyBlock.timestamp, emptyBlock.slot};
-    this->serializedHeader = headerSerializer.serialize(header);
+    context.contributionWrapper = {false};
+    context.header = {::io::ConsensusOperation::INSPECTION,
+                      context.nodeConfiguration.self.name,
+                      context.nodeConfiguration.self.address,
+                      emptyBlock.timestamp, emptyBlock.slot};
+    context.serializedHeader = headerSerializer.serialize(context.header);
     const auto blockchainSize =
         redis.add(emptyBlock, ::common::itf::DEFAULT_BLOCKAIN);
-    blockIndex = blockchainSize - 1;
+    context.blockIndex = blockchainSize - 1;
   }
 
-  const auto &message =
-      ::io::merge(serializedHeader,
-                  contributionWrapperSerializer.serialize(contributionWrapper));
+  const auto &message = ::io::merge(
+      context.serializedHeader,
+      contributionWrapperSerializer.serialize(context.contributionWrapper));
 
   const auto &consensusChannels =
       channelStore.getRemote(::io::ChannelType::CONSENSUS);
@@ -66,10 +69,11 @@ void SlotHandler::savePendingBlock() {
 void SlotHandler::notifyNodesAboutPendingBlock() {}
 
 void SlotHandler::waitForNodesInspection() {
-  const auto slot = header.slot;
+  const auto slot = context.header.slot;
   std::unordered_map<std::string, std::optional<bool>> confirmedContributions{};
-  confirmedContributions[nodeConfiguration.self.address] = block.has_value();
-  for (const auto &node : nodeConfiguration.nodes) {
+  confirmedContributions[context.nodeConfiguration.self.address] =
+      context.block.has_value();
+  for (const auto &node : context.nodeConfiguration.nodes) {
     confirmedContributions[node.address] = {};
   }
 
@@ -78,7 +82,7 @@ void SlotHandler::waitForNodesInspection() {
                   [](const auto &pair) { return !pair.second.has_value(); });
 
   while (!areAllContributorsConfirmed(confirmedContributions)) {
-    for (const auto &node : nodeConfiguration.nodes) {
+    for (const auto &node : context.nodeConfiguration.nodes) {
       if (const auto &contribution =
               consensusStorage.isContributing(node.address, slot);
           contribution.has_value()) {
@@ -93,11 +97,11 @@ void SlotHandler::waitForNodesInspection() {
 
   if (!isAnyNodeContributing) {
     removePendingBlock();
-    shouldCallNextHandler = false;
+    context.shouldCallNextHandler = false;
   }
 
-  if (!block.has_value()) {
-    shouldCallNextHandler = false;
+  if (!context.block.has_value()) {
+    context.shouldCallNextHandler = false;
   }
 }
 
@@ -110,15 +114,17 @@ bool SlotHandler::areAllContributorsConfirmed(
 
 void SlotHandler::removePendingBlock() {
 
-  const auto &b = redis.getByIndex(blockIndex, ::common::itf::DEFAULT_BLOCKAIN);
+  const auto &b =
+      redis.getByIndex(context.blockIndex, ::common::itf::DEFAULT_BLOCKAIN);
   redis.remove(b.value(), ::common::itf::DEFAULT_BLOCKAIN);
 }
 
 void SlotHandler::saveCompleteBlock() {
-  block.value().state = ::common::itf::BlockState::COMPLETED;
-  redis.update(block.value(), blockIndex, ::common::itf::DEFAULT_BLOCKAIN);
-  consensusStorage.clearSlot(header.slot);
+  context.block.value().state = ::common::itf::BlockState::COMPLETED;
+  redis.update(context.block.value(), context.blockIndex,
+               ::common::itf::DEFAULT_BLOCKAIN);
+  consensusStorage.clearSlot(context.header.slot);
 }
 
-void SlotHandler::publishBlock() { consumer.publish(block.value()); }
+void SlotHandler::publishBlock() { consumer.publish(context.block.value()); }
 } // namespace slot
