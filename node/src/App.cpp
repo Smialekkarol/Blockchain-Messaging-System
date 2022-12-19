@@ -55,8 +55,7 @@ int main(int argc, char **argv) {
     std::thread t([=, &consensusStorage, &configValue, &redis, &buffer,
                    &consumer, &channelStore]() {
       ::slot::SlotHandler slotHandler{
-          configValue.self, consensusStorage, redis,
-          buffer,           consumer,         channelStore};
+          configValue, consensusStorage, redis, buffer, consumer, channelStore};
       slotHandler.handle();
     });
     t.detach();

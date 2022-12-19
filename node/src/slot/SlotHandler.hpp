@@ -19,7 +19,7 @@
 namespace slot {
 class SlotHandler {
 public:
-  SlotHandler(const ::common::NodeInfo &nodeInfo_,
+  SlotHandler(const ::common::NodeConfiguration &nodeConfiguration_,
               ::db::ConsensusStorage &consensusStorage_, ::db::RedisDB &redis_,
               Buffer &buffer_, Consumer &consumer,
               ::io::ChannelStore &channelStore_);
@@ -34,7 +34,12 @@ private:
   void saveCompleteBlock();
   void publishBlock();
 
-  ::common::NodeInfo nodeInfo{};
+  bool areAllContributorsConfirmed(
+      const std::unordered_map<std::string, std::optional<bool>>
+          &confirmedContributors) const;
+
+  //TODO: Check with cpp core guidelines if this is good practice.
+  const ::common::NodeConfiguration &nodeConfiguration;
   ::db::ConsensusStorage &consensusStorage;
   ::db::RedisDB &redis;
   Buffer &buffer;
@@ -49,11 +54,10 @@ private:
   long long blockIndex{0};
   std::optional<::common::itf::Block> block{};
   bool shouldCallNextHandler{true};
-  std::vector<std::function<void()>> handlers{[this]() { savePendingBlock(); },
-                                              [this]() { savePendingBlock(); },
-                                              [this]() { waitForNodesInspection(); },
-                                              [this]() { removePendingBlock(); },
-                                              [this]() { saveCompleteBlock(); },
-                                              [this]() { publishBlock(); }};
+  std::vector<std::function<void()>> handlers{
+      [this]() { savePendingBlock(); },
+      [this]() { notifyNodesAboutPendingBlock(); },
+      [this]() { waitForNodesInspection(); }, [this]() { saveCompleteBlock(); },
+      [this]() { publishBlock(); }};
 };
 } // namespace slot
