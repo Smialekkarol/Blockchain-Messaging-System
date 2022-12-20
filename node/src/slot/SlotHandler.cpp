@@ -2,8 +2,10 @@
 
 #include "common/itf/Constants.hpp"
 
+#include "CompleteBlockSaver.hpp"
 #include "ContributionNotifier.hpp"
 #include "InspectionWaiter.hpp"
+#include "PendingBlockRemover.hpp"
 #include "PendingBlockSaver.hpp"
 
 #include "SlotHandler.hpp"
@@ -44,29 +46,13 @@ void SlotHandler::waitForNodesInspection() {
 }
 
 void SlotHandler::removePendingBlockIfNoOneIsContributing() {
-  const auto slot = context.header.slot;
-  const auto &nodes = context.nodeConfiguration.nodes;
-  const auto isAnyNodeContributing =
-      std::any_of(
-          nodes.begin(), nodes.end(),
-          [this, slot](const auto &node) {
-            return consensusStorage.isContributing(node.address, slot).value();
-          }) ||
-      context.contributionWrapper.isContributing;
-
-  if (!isAnyNodeContributing) {
-    const auto &b =
-        redis.getByIndex(context.blockIndex, ::common::itf::DEFAULT_BLOCKAIN);
-    redis.remove(b.value(), ::common::itf::DEFAULT_BLOCKAIN);
-    context.shouldCallNextHandler = false;
-  }
+  PendingBlockRemover pendingBlockRemover{context, redis, consensusStorage};
+  pendingBlockRemover.tryRemove();
 }
 
 void SlotHandler::saveCompleteBlock() {
-  context.block.state = ::common::itf::BlockState::COMPLETED;
-  redis.update(context.block, context.blockIndex,
-               ::common::itf::DEFAULT_BLOCKAIN);
-  consensusStorage.clearSlot(context.header.slot);
+  CompleteBlockSaver completeBlockSaver{context, redis, consensusStorage};
+  completeBlockSaver.save();
 }
 
 void SlotHandler::publishBlock() { consumer.publish(context.block); }
