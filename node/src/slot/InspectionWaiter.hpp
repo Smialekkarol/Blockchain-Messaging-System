@@ -13,9 +13,6 @@ public:
   void wait();
 
 private:
-  bool areAllContributorsConfirmed(const std::vector<common::NodeInfo> &nodes,
-                                   const std::uint64_t slot) const;
-
   SlotContext &context;
   ::db::ConsensusStorage &consensusStorage;
 };

@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <mutex>
 
 #include "InspectionWaiter.hpp"
 
@@ -9,17 +10,13 @@ InspectionWaiter::InspectionWaiter(SlotContext &context,
 
 void InspectionWaiter::wait() {
   const auto slot = context.header.slot;
-  const auto &nodes = context.nodeConfiguration.nodes;
-  while (!areAllContributorsConfirmed(nodes, slot)) {
-  }
-}
-
-bool InspectionWaiter::areAllContributorsConfirmed(
-    const std::vector<common::NodeInfo> &nodes,
-    const std::uint64_t slot) const {
-  return std::all_of(
-      nodes.begin(), nodes.end(), [this, slot](const auto &node) {
-        return consensusStorage.isContributing(node.address, slot).has_value();
+  const auto slotSynchronizationContext =
+      consensusStorage.getSlotSynchronizationContext(slot);
+  std::unique_lock<std::mutex> lock{slotSynchronizationContext->mutex};
+  slotSynchronizationContext->condition.wait(
+      lock, [slotSynchronizationContext] {
+        return slotSynchronizationContext->isSynchronized.load();
       });
+  slotSynchronizationContext->isSynchronized.store(false);
 }
 } // namespace slot

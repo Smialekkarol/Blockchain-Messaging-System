@@ -36,6 +36,10 @@ void SlotHandler::savePendingBlock() {
 };
 
 void SlotHandler::notifyNodesAboutContribution() {
+  consensusStorage.addContext(context.header.address, context.header.node,
+                              context.header.slot);
+  consensusStorage.setContribution(context.header.address, context.header.slot,
+                                   context.contributionWrapper.isContributing);
   ContributionNotifier contributionNotifier{context, channelStore};
   contributionNotifier.notify();
 }

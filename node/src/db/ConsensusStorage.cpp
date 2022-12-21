@@ -2,6 +2,12 @@
 #include <algorithm>
 
 namespace db {
+bool ConsensusStorage::areAllContributorsConfirmed(const std::uint64_t slot) {
+  return std::all_of(contexts.begin(), contexts.end(),
+                     [this, slot](const auto &pair) {
+                       return isContributing(pair.first, slot).has_value();
+                     });
+}
 
 std::optional<bool> ConsensusStorage::isContributing(const std::string &address,
                                                      const std::uint64_t slot) {
@@ -20,6 +26,21 @@ ConsensusStorage::findValidator(const std::uint64_t slot) {
     return it->second[slot];
   }
   return {};
+}
+
+void ConsensusStorage::init(const std::uint64_t slot) {
+  const auto &isContextFound =
+      std::find_if(conditions.begin(), conditions.end(),
+                   [slot](const auto &pair) { return pair.first == slot; });
+  if (isContextFound != conditions.end()) {
+    return;
+  }
+  conditions.emplace(slot, std::make_shared<SlotSychronizationContext>());
+}
+
+std::shared_ptr<SlotSychronizationContext>
+ConsensusStorage::getSlotSynchronizationContext(const std::uint64_t slot) {
+  return conditions[slot];
 }
 
 void ConsensusStorage::clearSlot(const std::uint64_t slot) {

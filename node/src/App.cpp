@@ -50,6 +50,10 @@ int main(int argc, char **argv) {
   ::slot::TimerWheel timerWheel{};
   ::io::ConnectionStore connectionStore{};
   ::io::ChannelStore channelStore{};
+  timerWheel.subscribe([&consensusStorage]() {
+    const auto slot = ::common::utils::Time::getSlot();
+    consensusStorage.init(slot);
+  });
   timerWheel.subscribe([&configValue, &consensusStorage, &redis, &buffer,
                         &consumer, &channelStore]() {
     std::thread t([=, &consensusStorage, &configValue, &redis, &buffer,
@@ -103,12 +107,21 @@ int main(int argc, char **argv) {
             deserializedHeader.timestamp, deserializedHeader.slot,
             contributionWrapper.isContributing);
       }
+      consensusStorage.init(deserializedHeader.slot);
       consensusStorage.addContext(deserializedHeader.address,
                                   deserializedHeader.node,
                                   deserializedHeader.slot);
       consensusStorage.setContribution(deserializedHeader.address,
                                        deserializedHeader.slot,
                                        contributionWrapper.isContributing);
+
+      if (consensusStorage.areAllContributorsConfirmed(
+              deserializedHeader.slot)) {
+        consensusStorage.getSlotSynchronizationContext(deserializedHeader.slot)
+            ->isSynchronized.store(true);
+        consensusStorage.getSlotSynchronizationContext(deserializedHeader.slot)
+            ->condition.notify_all();
+      }
     }
   });
 
@@ -123,6 +136,9 @@ int main(int argc, char **argv) {
   }
 
   for (auto &item : connectionStore.get()) {
+    if (configValue.self.address == item.first) {
+      continue;
+    }
     std::thread t([=, &item]() {
       auto *loop = item.second.loop;
       auto *connection = item.second.connection.get();
@@ -134,8 +150,8 @@ int main(int argc, char **argv) {
   timerWheel.start();
   std::thread{[&consumer]() { consumer.run(); }}.detach();
 
-  while (true) {
-  }
-
+  auto &selfConnectionData = connectionStore.get().at(configValue.self.address);
+  auto *loop = selfConnectionData.loop;
+  ev_run(loop, 0);
   return 0;
 }
