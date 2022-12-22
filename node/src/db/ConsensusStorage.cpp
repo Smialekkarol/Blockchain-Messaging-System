@@ -1,18 +1,81 @@
-#include "ConsensusStorage.hpp"
 #include <algorithm>
+#include <set>
+
+#include <spdlog/spdlog.h>
+
+#include "ConsensusStorage.hpp"
 
 namespace db {
 bool ConsensusStorage::areAllContributorsConfirmed(const std::uint64_t slot) {
+  std::scoped_lock lock(mutex);
   return std::all_of(contexts.begin(), contexts.end(),
-                     [this, slot](const auto &pair) {
-                       return isContributing(pair.first, slot).has_value();
+                     [this, slot](auto &pair) {
+                       return pair.second[slot].isContributing.has_value();
                      });
 }
 
-std::optional<bool> ConsensusStorage::isContributing(const std::string &address,
-                                                     const std::uint64_t slot) {
+bool ConsensusStorage::isAnyNodeContributing(const std::uint64_t slot) {
   std::scoped_lock lock(mutex);
-  return contexts[address][slot].isContributing;
+  return std::any_of(contexts.begin(), contexts.end(),
+                     [this, slot](auto &pair) {
+                       return pair.second[slot].isContributing.value();
+                     });
+}
+
+bool ConsensusStorage::areAllElectionValuesPresent(const std::uint64_t slot) {
+  std::scoped_lock lock(mutex);
+  return std::all_of(contexts.begin(), contexts.end(), [slot](auto &pair) {
+    return pair.second[slot].electionValue > 0;
+  });
+}
+
+bool ConsensusStorage::isElectionValueUnique(const std::string &address,
+                                             const std::uint64_t slot) {
+  std::scoped_lock lock(mutex);
+  const auto electionValue = contexts[address][slot].electionValue;
+  bool isElectionValueUnique{true};
+  for (auto &[contextAddress, consensusContexts] : contexts) {
+    if (contextAddress == address) {
+      spdlog::error("contextAddress {} address {}", contextAddress, address);
+      continue;
+    }
+    const auto value = consensusContexts[slot].electionValue;
+    if (value == electionValue) {
+      spdlog::error("Duplicate election value: current node {} and {}",
+                    electionValue, value);
+      isElectionValueUnique = false;
+      break;
+    }
+  }
+  return isElectionValueUnique;
+}
+
+void ConsensusStorage::removeElectionValueDuplicates(const std::uint64_t slot) {
+  std::scoped_lock lock(mutex);
+  std::set<std::string> duplicatedAddresses{};
+  for (auto &[address, consensusContexts] : contexts) {
+    bool isAnyDuplicate{false};
+    const auto value = consensusContexts[slot].electionValue;
+    for (auto &[addressCompared, consensusContextsCompared] : contexts) {
+      const auto compared = consensusContextsCompared[slot].electionValue;
+      if (value == compared) {
+        isAnyDuplicate = true;
+        spdlog::error("Removing duplicate: {}, from: {}",
+                      consensusContextsCompared[slot].electionValue,
+                      addressCompared);
+        duplicatedAddresses.emplace(address);
+      }
+    }
+    if (isAnyDuplicate) {
+      spdlog::error("Removing duplicate: {}, from: {}",
+                    consensusContexts[slot].electionValue, address);
+      duplicatedAddresses.emplace(address);
+    }
+  }
+
+  for (auto &address : duplicatedAddresses) {
+    contexts[address][slot].electionValue = 0;
+  }
 }
 
 std::optional<ConsensusContext>

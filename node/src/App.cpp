@@ -11,6 +11,7 @@
 #include "io/ConnectionStore.hpp"
 #include "io/ConsensusChannel.hpp"
 #include "io/ContributionWrapperSerializer.hpp"
+#include "io/ElectionValueWrapperSerializer.hpp"
 #include "io/HeaderSerializer.hpp"
 #include "io/Utils.hpp"
 
@@ -86,13 +87,6 @@ int main(int argc, char **argv) {
     ::io::HeaderSerializer headerSerializer{};
     const auto &deserializedHeader = headerSerializer.deserialize(header);
 
-    if (deserializedHeader.operation != ::io::ConsensusOperation::INSPECTION) {
-      spdlog::error("[{}]{} Received unsupported operation: {}",
-                    localNodeInfo.address, localNodeInfo.name,
-                    static_cast<std::uint16_t>(deserializedHeader.operation));
-      return;
-    }
-
     if (deserializedHeader.operation == ::io::ConsensusOperation::INSPECTION) {
       ::io::ContributionWrapperSerializer contributionWrapperSerializer{};
       const auto &contributionWrapper =
@@ -116,6 +110,33 @@ int main(int argc, char **argv) {
                                        contributionWrapper.isContributing);
 
       if (consensusStorage.areAllContributorsConfirmed(
+              deserializedHeader.slot)) {
+        consensusStorage.getSlotSynchronizationContext(deserializedHeader.slot)
+            ->isSynchronized.store(true);
+        consensusStorage.getSlotSynchronizationContext(deserializedHeader.slot)
+            ->condition.notify_all();
+      }
+    }
+
+    if (deserializedHeader.operation == ::io::ConsensusOperation::ELECTION) {
+      ::io::ElectionValueWrapperSerializer electionValueWrapperSerializer{};
+      const auto &electionWrapper =
+          electionValueWrapperSerializer.deserialize(body);
+      spdlog::info(
+          "[{}]{} Received: operation {}, node {}, address {} , timestamp "
+          "{} , slot {} , electionValue {}",
+          localNodeInfo.address, localNodeInfo.name,
+          static_cast<std::uint16_t>(deserializedHeader.operation),
+          deserializedHeader.node, deserializedHeader.address,
+          deserializedHeader.timestamp, deserializedHeader.slot,
+          electionWrapper.value);
+
+      consensusStorage.init(deserializedHeader.slot);
+      consensusStorage.fillElectionValue(deserializedHeader.address,
+                                         deserializedHeader.slot,
+                                         electionWrapper.value);
+
+      if (consensusStorage.areAllElectionValuesPresent(
               deserializedHeader.slot)) {
         consensusStorage.getSlotSynchronizationContext(deserializedHeader.slot)
             ->isSynchronized.store(true);

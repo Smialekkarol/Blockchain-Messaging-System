@@ -38,9 +38,11 @@ public:
   ~ConsensusStorage() = default;
 
   bool areAllContributorsConfirmed(const std::uint64_t slot);
-
-  std::optional<bool> isContributing(const std::string &address,
-                                     const std::uint64_t slot);
+  bool isAnyNodeContributing(const std::uint64_t slot);
+  bool areAllElectionValuesPresent(const std::uint64_t slot);
+  bool isElectionValueUnique(const std::string &address,
+                             const std::uint64_t slot);
+  void removeElectionValueDuplicates(const std::uint64_t slot);
   std::optional<ConsensusContext> findValidator(const std::uint64_t slot);
   void init(const std::uint64_t slot);
   void clearSlot(const std::uint64_t slot);
