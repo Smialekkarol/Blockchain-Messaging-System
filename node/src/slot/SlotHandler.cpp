@@ -35,53 +35,40 @@ void SlotHandler::handle() {
 }
 
 void SlotHandler::savePendingBlock() {
-  // spdlog::info("SlotHandler::savePendingBlock");
   PendingBlockSaver PendingBlockSaver{context, redis, buffer};
   PendingBlockSaver.save();
 };
 
 void SlotHandler::notifyNodesAboutContribution() {
-  // spdlog::info("SlotHandler::notifyNodesAboutContribution");
-  consensusStorage.addContext(context.header.address, context.header.node,
-                              context.header.slot);
-  consensusStorage.setContribution(context.header.address, context.header.slot,
-                                   context.contributionWrapper.isContributing);
-  ContributionNotifier contributionNotifier{context, channelStore};
+  ContributionNotifier contributionNotifier{context, channelStore,
+                                            consensusStorage};
   contributionNotifier.notify();
 }
 
 void SlotHandler::waitForNodesInspection() {
-  // spdlog::info("SlotHandler::waitForNodesInspection");
   InspectionWaiter inspectionWaiter{context, consensusStorage};
   inspectionWaiter.wait();
 }
 
 void SlotHandler::removePendingBlockIfNoOneIsContributing() {
-  // spdlog::info("SlotHandler::removePendingBlockIfNoOneIsContributing");
   PendingBlockRemover pendingBlockRemover{context, redis, consensusStorage};
   pendingBlockRemover.tryRemove();
 }
 
 void SlotHandler::sendElectionValue() {
-  spdlog::info("SlotHandler::sendElectionValue");
   ElectionNotifier electionNotifier{context, channelStore, consensusStorage};
   electionNotifier.notify();
 }
 
 void SlotHandler::waitForNodesElection() {
-  spdlog::info("SlotHandler::waitForNodesElection");
   ElectionWaiter electionWaiter{context, channelStore, consensusStorage};
   electionWaiter.wait();
 }
 
 void SlotHandler::saveCompleteBlock() {
-  spdlog::info("SlotHandler::saveCompleteBlock");
   CompleteBlockSaver completeBlockSaver{context, redis, consensusStorage};
   completeBlockSaver.save();
 }
 
-void SlotHandler::publishBlock() {
-  spdlog::info("SlotHandler::publishBlock");
-  consumer.publish(context.block);
-}
+void SlotHandler::publishBlock() { consumer.publish(context.block); }
 } // namespace slot

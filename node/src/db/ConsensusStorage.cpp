@@ -36,13 +36,12 @@ bool ConsensusStorage::isElectionValueUnique(const std::string &address,
   bool isElectionValueUnique{true};
   for (auto &[contextAddress, consensusContexts] : contexts) {
     if (contextAddress == address) {
-      spdlog::error("contextAddress {} address {}", contextAddress, address);
       continue;
     }
     const auto value = consensusContexts[slot].electionValue;
     if (value == electionValue) {
-      spdlog::error("Duplicate election value: current node {} and {}",
-                    electionValue, value);
+      spdlog::error("Duplicated elevtion value [{}] for slot [{}]",
+                    electionValue, slot);
       isElectionValueUnique = false;
       break;
     }
@@ -60,15 +59,10 @@ void ConsensusStorage::removeElectionValueDuplicates(const std::uint64_t slot) {
       const auto compared = consensusContextsCompared[slot].electionValue;
       if (value == compared) {
         isAnyDuplicate = true;
-        spdlog::error("Removing duplicate: {}, from: {}",
-                      consensusContextsCompared[slot].electionValue,
-                      addressCompared);
         duplicatedAddresses.emplace(address);
       }
     }
     if (isAnyDuplicate) {
-      spdlog::error("Removing duplicate: {}, from: {}",
-                    consensusContexts[slot].electionValue, address);
       duplicatedAddresses.emplace(address);
     }
   }

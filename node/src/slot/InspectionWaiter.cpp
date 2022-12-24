@@ -1,5 +1,10 @@
 #include <algorithm>
+#include <chrono>
 #include <mutex>
+
+#include <spdlog/spdlog.h>
+
+#include "common/utils/Time.hpp"
 
 #include "InspectionWaiter.hpp"
 
@@ -14,7 +19,7 @@ void InspectionWaiter::wait() {
       consensusStorage.getSlotSynchronizationContext(slot);
   std::unique_lock<std::mutex> lock{slotSynchronizationContext->mutex};
   slotSynchronizationContext->condition.wait(
-      lock, [slotSynchronizationContext] {
+      lock, [slotSynchronizationContext]() {
         return slotSynchronizationContext->isSynchronized.load();
       });
   slotSynchronizationContext->isSynchronized.store(false);

@@ -1,5 +1,7 @@
 #include <algorithm>
 
+#include <spdlog/spdlog.h>
+
 #include "common/itf/Constants.hpp"
 
 #include "PendingBlockRemover.hpp"

@@ -3,9 +3,8 @@
 #include "PendingBlockSaver.hpp"
 
 namespace slot {
-PendingBlockSaver::PendingBlockSaver(SlotContext &context,
-                                                 ::db::RedisDB &redis,
-                                                 Buffer &buffer)
+PendingBlockSaver::PendingBlockSaver(SlotContext &context, ::db::RedisDB &redis,
+                                     Buffer &buffer)
     : context{context}, redis{redis}, buffer{buffer} {}
 
 void PendingBlockSaver::save() {

@@ -31,6 +31,7 @@ void logConfiguration(const common::NodeConfiguration &config) {
 }
 
 int main(int argc, char **argv) {
+  std::this_thread::sleep_for(std::chrono::milliseconds(5000));
   spdlog::set_level(spdlog::level::debug);
   if (argc < 2) {
     spdlog::error("Usage: {}: <node_configuration_file>", argv[0]);
@@ -142,6 +143,11 @@ int main(int argc, char **argv) {
             ->isSynchronized.store(true);
         consensusStorage.getSlotSynchronizationContext(deserializedHeader.slot)
             ->condition.notify_all();
+        spdlog::info("[{}]{} Received: operation {},  slot {}, all election "
+                     "values set, notifing watier.",
+                     localNodeInfo.address, localNodeInfo.name,
+                     static_cast<std::uint16_t>(deserializedHeader.operation),
+                     deserializedHeader.slot);
       }
     }
   });
