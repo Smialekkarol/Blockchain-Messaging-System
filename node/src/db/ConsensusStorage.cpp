@@ -6,6 +6,9 @@
 #include "ConsensusStorage.hpp"
 
 namespace db {
+ConsensusStorage::ConsensusStorage(const ::common::NodeConfiguration &config)
+    : config{config} {}
+
 bool ConsensusStorage::areAllContributorsConfirmed(const std::uint64_t slot) {
   std::scoped_lock lock(mutex);
   return std::all_of(contexts.begin(), contexts.end(),
@@ -83,6 +86,12 @@ ConsensusStorage::findValidator(const std::uint64_t slot) {
     return it->second[slot];
   }
   return {};
+}
+
+void ConsensusStorage::initContexts(const std::uint64_t slot) {
+  for (const auto &node : config.nodes) {
+    contexts[node.address][slot];
+  }
 }
 
 void ConsensusStorage::init(const std::uint64_t slot) {

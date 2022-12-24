@@ -22,7 +22,7 @@
 #include "ConfigurationReader.hpp"
 #include "Consumer.hpp"
 
-void logConfiguration(const common::NodeConfiguration &config) {
+void logConfiguration(const ::common::NodeConfiguration &config) {
   const auto &nodes{config.nodes};
   spdlog::info("Loaded {} node(s)", nodes.size());
   for (const auto &node : nodes) {
@@ -31,7 +31,7 @@ void logConfiguration(const common::NodeConfiguration &config) {
 }
 
 int main(int argc, char **argv) {
-  std::this_thread::sleep_for(std::chrono::milliseconds(5000));
+  // std::this_thread::sleep_for(std::chrono::milliseconds(5000));
   spdlog::set_level(spdlog::level::debug);
   if (argc < 2) {
     spdlog::error("Usage: {}: <node_configuration_file>", argv[0]);
@@ -46,7 +46,7 @@ int main(int argc, char **argv) {
   logConfiguration(configValue);
 
   ::db::RedisDB redis{};
-  ::db::ConsensusStorage consensusStorage{};
+  ::db::ConsensusStorage consensusStorage{configValue};
   Buffer buffer{};
   Consumer consumer(configValue, buffer);
   ::slot::TimerWheel timerWheel{};
