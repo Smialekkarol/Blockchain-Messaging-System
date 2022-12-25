@@ -2,8 +2,12 @@
 
 #include "common/itf/Constants.hpp"
 
+#include "BroadcastNotifier.hpp"
+#include "BroadcastWaiter.hpp"
 #include "CompleteBlockSaver.hpp"
 #include "ContributionNotifier.hpp"
+#include "ContributorsDataWaiter.hpp"
+#include "DataRelay.hpp"
 #include "ElectionNotifier.hpp"
 #include "ElectionWaiter.hpp"
 #include "InspectionWaiter.hpp"
@@ -65,6 +69,29 @@ void SlotHandler::waitForNodesElection() {
 
 void SlotHandler::nominateValidator() {
   consensusStorage.markValidator(context.header.slot);
+}
+
+void SlotHandler::transferDataToValidator() {
+  DataRelay dataRelay{context, channelStore, consensusStorage};
+  dataRelay.transfer();
+}
+
+void SlotHandler::waitForContributorsData() {
+  // TODO: this needs to be tested in proper simulation
+  ContributorsDataWaiter contributorsDataWaiter{context, consensusStorage};
+  contributorsDataWaiter.wait();
+}
+
+void SlotHandler::broadcast() {
+  // TODO: this needs to be tested in proper simulation
+  BroadcastNotifier broadcastNotifier{context, consensusStorage, channelStore};
+  broadcastNotifier.broadcast();
+}
+
+void SlotHandler::waitForBroadcast() {
+  // TODO: this needs to be tested in proper simulation
+  BroadcastWaiter broadcastWaiter{context, consensusStorage};
+  broadcastWaiter.wait();
 }
 
 void SlotHandler::saveCompleteBlock() {

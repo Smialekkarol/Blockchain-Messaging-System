@@ -17,6 +17,9 @@ struct SlotContext {
   std::string serializedHeader{};
   long long blockIndex{0};
   ::common::itf::Block block{};
+  ::common::itf::Block broadcastBlock{};
   bool shouldCallNextHandler{true};
+  std::string validator{};
+  bool isValidator{false};
 };
 } // namespace slot

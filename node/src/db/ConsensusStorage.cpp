@@ -73,17 +73,40 @@ void ConsensusStorage::removeElectionValueDuplicates(const std::uint64_t slot) {
   }
 }
 
-std::optional<ConsensusContext>
-ConsensusStorage::findValidator(const std::uint64_t slot) {
+std::string ConsensusStorage::getValidator(const std::uint64_t slot) {
   std::scoped_lock lock(mutex);
-  const auto &it =
-      std::find_if(contexts.begin(), contexts.end(), [slot](auto slotContexts) {
-        return slotContexts.second[slot].isValidator;
-      });
-  if (it != contexts.end()) {
-    return it->second[slot];
-  }
-  return {};
+  return getValidatorimpl(slot);
+}
+
+std::string ConsensusStorage::getValidatorimpl(const std::uint64_t slot) {
+  std::string_view validator{};
+  std::for_each(contexts.begin(), contexts.end(),
+                [&validator, slot](auto &pair) {
+                  if (pair.second[slot].isValidator) {
+                    validator = pair.first;
+                  }
+                });
+  return validator.data();
+}
+
+bool ConsensusStorage::isAllContributorsDataCollected(
+    const std::uint64_t slot) {
+  return std::all_of(contexts.begin(), contexts.end(), [slot](auto &pair) {
+    if (pair.second[slot].isContributing.value()) {
+      return pair.second[slot].block.data.size() > 0;
+    }
+    return true;
+  });
+}
+
+bool ConsensusStorage::isResolved(const std::string &address,
+                                  const std::uint64_t slot) {
+  return contexts[address][slot].isResolved;
+}
+
+::common::itf::Block ConsensusStorage::getBlock(const std::string &address,
+                                                const std::uint64_t slot) {
+  return contexts[address][slot].block;
 }
 
 void ConsensusStorage::initContexts(const std::uint64_t slot) {
@@ -181,4 +204,28 @@ void ConsensusStorage::marAsResolved(const std::string &address,
   contexts[address][slot].isResolved = true;
 }
 
+::common::itf::Block
+ConsensusStorage::mergeContributors(const std::uint64_t slot) {
+  std::scoped_lock lock(mutex);
+  const auto &validator = getValidatorimpl(slot);
+  auto &validatorBlock = contexts[validator][slot].block;
+
+  std::for_each(contexts.begin(), contexts.end(),
+                [&validator, &validatorBlock, slot](auto &pair) {
+                  auto &context = pair.second[slot];
+                  if (pair.first == validator ||
+                      !context.isContributing.value()) {
+                    return;
+                  }
+                  validatorBlock.data.insert(validatorBlock.data.end(),
+                                             context.block.data.begin(),
+                                             context.block.data.end());
+                });
+
+  std::sort(validatorBlock.data.begin(), validatorBlock.data.end(),
+            [](const auto &message1, const auto &message2) {
+              return message1.timestamp < message2.timestamp;
+            });
+  return validatorBlock;
+}
 } // namespace db

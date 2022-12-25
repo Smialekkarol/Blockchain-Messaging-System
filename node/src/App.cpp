@@ -143,11 +143,62 @@ int main(int argc, char **argv) {
         consensusStorage.getSlotSynchronizationContext(deserializedHeader.slot)
             ->condition.notify_all();
         spdlog::info("[{}]{} Received: operation {},  slot {}, all election "
-                     "values set, notifing watier.",
+                     "values set, notifing waiter.",
                      localNodeInfo.address, localNodeInfo.name,
                      static_cast<std::uint16_t>(deserializedHeader.operation),
                      deserializedHeader.slot);
       }
+    }
+
+    if (deserializedHeader.operation == ::io::ConsensusOperation::UPLOADING) {
+      ::serialization::BlockSerializer blockSerializer{};
+      const auto &block = blockSerializer.deserialize(body);
+      spdlog::info(
+          "[{}]{} Received: operation {}, node {}, address {} , timestamp "
+          "{} , slot {} , block {}",
+          localNodeInfo.address, localNodeInfo.name,
+          static_cast<std::uint16_t>(deserializedHeader.operation),
+          deserializedHeader.node, deserializedHeader.address,
+          deserializedHeader.timestamp, deserializedHeader.slot, body);
+
+      consensusStorage.addBlock(deserializedHeader.address,
+                                deserializedHeader.slot, block);
+
+      if (consensusStorage.isAllContributorsDataCollected(
+              deserializedHeader.slot)) {
+        consensusStorage.getSlotSynchronizationContext(deserializedHeader.slot)
+            ->isSynchronized.store(true);
+        consensusStorage.getSlotSynchronizationContext(deserializedHeader.slot)
+            ->condition.notify_all();
+        spdlog::info("[{}]{} Received: operation {},  slot {}, all nodes "
+                     "uploaded their data "
+                     " notifing waiter.",
+                     localNodeInfo.address, localNodeInfo.name,
+                     static_cast<std::uint16_t>(deserializedHeader.operation),
+                     deserializedHeader.slot);
+      }
+    }
+
+    if (deserializedHeader.operation == ::io::ConsensusOperation::BROADCAST) {
+      ::serialization::BlockSerializer blockSerializer{};
+      const auto &block = blockSerializer.deserialize(body);
+      spdlog::info("[{}]{} Received broadcast from validator: operation {}, "
+                   "node {}, address {} , timestamp "
+                   "{} , slot {} , block {}",
+                   localNodeInfo.address, localNodeInfo.name,
+                   static_cast<std::uint16_t>(deserializedHeader.operation),
+                   deserializedHeader.node, deserializedHeader.address,
+                   deserializedHeader.timestamp, deserializedHeader.slot, body);
+
+      consensusStorage.addBlock(deserializedHeader.address,
+                                deserializedHeader.slot, block);
+      consensusStorage.marAsResolved(deserializedHeader.address,
+                                     deserializedHeader.slot);
+
+      consensusStorage.getSlotSynchronizationContext(deserializedHeader.slot)
+          ->isSynchronized.store(true);
+      consensusStorage.getSlotSynchronizationContext(deserializedHeader.slot)
+          ->condition.notify_all();
     }
   });
 
