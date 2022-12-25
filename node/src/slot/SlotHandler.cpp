@@ -65,6 +65,10 @@ void SlotHandler::waitForNodesElection() {
   electionWaiter.wait();
 }
 
+void SlotHandler::nominateValidator() {
+  consensusStorage.markValidator(context.header.slot);
+}
+
 void SlotHandler::saveCompleteBlock() {
   CompleteBlockSaver completeBlockSaver{context, redis, consensusStorage};
   completeBlockSaver.save();

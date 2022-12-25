@@ -27,6 +27,7 @@ private:
   void removePendingBlockIfNoOneIsContributing();
   void sendElectionValue();
   void waitForNodesElection();
+  void nominateValidator();
   void saveCompleteBlock();
   void publishBlock();
 
@@ -45,6 +46,7 @@ private:
       [this]() { removePendingBlockIfNoOneIsContributing(); },
       [this]() { sendElectionValue(); },
       [this]() { waitForNodesElection(); },
+      [this]() { nominateValidator(); },
       [this]() { saveCompleteBlock(); },
       [this]() { publishBlock(); }};
 };

@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <numeric>
 #include <set>
 
 #include <spdlog/spdlog.h>
@@ -132,10 +133,42 @@ void ConsensusStorage::setContribution(const std::string &address,
   contexts[address][slot].isContributing = isContributing;
 }
 
-void ConsensusStorage::markValidator(const std::string &address,
-                                     const std::uint64_t slot) {
+void ConsensusStorage::markValidator(const std::uint64_t slot) {
   std::scoped_lock lock(mutex);
-  contexts[address][slot].isValidator = true;
+  std::for_each(contexts.begin(), contexts.end(), [slot](auto &pair) {
+    spdlog::info("Election Value: {}", pair.second[slot].electionValue);
+  });
+  const auto sum = std::accumulate(
+      contexts.begin(), contexts.end(), 0, [slot](auto prev, auto &pair) {
+        return prev + pair.second[slot].electionValue;
+      });
+  spdlog::info("Election Values sum: {}", sum);
+  std::string_view validator{contexts.begin()->first};
+  std::uint64_t value{contexts.begin()->second[slot].electionValue};
+  if (sum % 2) {
+    spdlog::info("Election Values are even, choosing the biggest value");
+    std::for_each(contexts.begin(), contexts.end(),
+                  [&validator, &value, slot](auto &pair) {
+                    if (const auto v = pair.second[slot].electionValue;
+                        v > value) {
+                      validator = pair.first;
+                      value = v;
+                    }
+                  });
+  } else {
+    spdlog::info("Election Values are odd, choosing the smallest value");
+    std::for_each(contexts.begin(), contexts.end(),
+                  [&validator, &value, slot](auto &pair) {
+                    if (const auto v = pair.second[slot].electionValue;
+                        v < value) {
+                      validator = pair.first;
+                      value = v;
+                    }
+                  });
+  }
+  spdlog::info("Validator is: {} with value: {}", validator.data(),
+               contexts[validator.data()][slot].electionValue);
+  contexts[validator.data()][slot].isValidator = true;
 }
 
 void ConsensusStorage::fillElectionValue(const std::string &address,

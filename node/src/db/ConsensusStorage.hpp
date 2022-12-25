@@ -57,7 +57,7 @@ public:
                   const std::uint64_t slot);
   void setContribution(const std::string &address, const std::uint64_t slot,
                        bool isContributing);
-  void markValidator(const std::string &address, const std::uint64_t slot);
+  void markValidator(const std::uint64_t slot);
   void fillElectionValue(const std::string &address, const std::uint64_t slot,
                          const std::uint64_t electionValue);
   void addBlock(const std::string &address, const std::uint64_t slot,
