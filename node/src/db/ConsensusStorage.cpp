@@ -2,13 +2,12 @@
 #include <numeric>
 #include <set>
 
-#include <spdlog/spdlog.h>
-
 #include "ConsensusStorage.hpp"
 
 namespace db {
-ConsensusStorage::ConsensusStorage(const ::common::NodeConfiguration &config)
-    : config{config} {}
+ConsensusStorage::ConsensusStorage(
+    const ::common::NodeConfiguration &nodeConfiguration)
+    : nodeConfiguration{nodeConfiguration} {}
 
 bool ConsensusStorage::areAllContributorsConfirmed(const std::uint64_t slot) {
   std::scoped_lock lock(mutex);
@@ -44,8 +43,6 @@ bool ConsensusStorage::isElectionValueUnique(const std::string &address,
     }
     const auto value = consensusContexts[slot].electionValue;
     if (value == electionValue) {
-      spdlog::error("Duplicated elevtion value [{}] for slot [{}]",
-                    electionValue, slot);
       isElectionValueUnique = false;
       break;
     }
@@ -90,8 +87,9 @@ ConsensusStorage::findValidator(const std::uint64_t slot) {
 }
 
 void ConsensusStorage::initContexts(const std::uint64_t slot) {
-  contexts[config.self.address].try_emplace(slot, ConsensusContext{});
-  for (const auto &node : config.nodes) {
+  contexts[nodeConfiguration.self.address].try_emplace(slot,
+                                                       ConsensusContext{});
+  for (const auto &node : nodeConfiguration.nodes) {
     contexts[node.address].try_emplace(slot, ConsensusContext{});
   }
 }
@@ -135,18 +133,13 @@ void ConsensusStorage::setContribution(const std::string &address,
 
 void ConsensusStorage::markValidator(const std::uint64_t slot) {
   std::scoped_lock lock(mutex);
-  std::for_each(contexts.begin(), contexts.end(), [slot](auto &pair) {
-    spdlog::info("Election Value: {}", pair.second[slot].electionValue);
-  });
   const auto sum = std::accumulate(
       contexts.begin(), contexts.end(), 0, [slot](auto prev, auto &pair) {
         return prev + pair.second[slot].electionValue;
       });
-  spdlog::info("Election Values sum: {}", sum);
   std::string_view validator{contexts.begin()->first};
   std::uint64_t value{contexts.begin()->second[slot].electionValue};
   if (sum % 2) {
-    spdlog::info("Election Values are even, choosing the biggest value");
     std::for_each(contexts.begin(), contexts.end(),
                   [&validator, &value, slot](auto &pair) {
                     if (const auto v = pair.second[slot].electionValue;
@@ -156,7 +149,6 @@ void ConsensusStorage::markValidator(const std::uint64_t slot) {
                     }
                   });
   } else {
-    spdlog::info("Election Values are odd, choosing the smallest value");
     std::for_each(contexts.begin(), contexts.end(),
                   [&validator, &value, slot](auto &pair) {
                     if (const auto v = pair.second[slot].electionValue;
@@ -166,8 +158,6 @@ void ConsensusStorage::markValidator(const std::uint64_t slot) {
                     }
                   });
   }
-  spdlog::info("Validator is: {} with value: {}", validator.data(),
-               contexts[validator.data()][slot].electionValue);
   contexts[validator.data()][slot].isValidator = true;
 }
 

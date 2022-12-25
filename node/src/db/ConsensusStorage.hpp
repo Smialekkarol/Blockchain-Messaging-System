@@ -10,8 +10,6 @@
 
 #include "ConsensusContext.hpp"
 
-// TODO: Remove usage of brackets operator in favor of .at() usage. Add fill
-// method to be called at each slot beginning.
 namespace db {
 
 struct SlotSychronizationContext {
@@ -32,7 +30,7 @@ struct SlotSychronizationContext {
 class ConsensusStorage {
 public:
   ConsensusStorage() = default;
-  ConsensusStorage(const ::common::NodeConfiguration &config);
+  ConsensusStorage(const ::common::NodeConfiguration &nodeConfiguration);
   ConsensusStorage(const ConsensusStorage &other) = delete;
   ConsensusStorage(ConsensusStorage &&other) = delete;
   ConsensusStorage &operator=(const ConsensusStorage &other) = delete;
@@ -65,7 +63,7 @@ public:
   void marAsResolved(const std::string &address, const std::uint64_t slot);
 
 private:
-  ::common::NodeConfiguration config;
+  ::common::NodeConfiguration nodeConfiguration;
   std::unordered_map<std::string,
                      std::unordered_map<std::uint64_t, ConsensusContext>>
       contexts{};

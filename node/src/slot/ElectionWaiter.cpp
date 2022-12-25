@@ -33,9 +33,10 @@ void ElectionWaiter::wait() {
         });
     if (!consensusStorage.isElectionValueUnique(
             context.nodeConfiguration.self.address, slot)) {
-      spdlog::error("ElectionWaiter::ElectionWaiter, slot[{}] Duplicate "
-                    "election value",
-                    slot);
+      spdlog::error(
+          "ElectionWaiter::ElectionWaiter, slot[{}] Duplicate "
+          "election value. Removing duplicates and generating new values.",
+          slot);
       consensusStorage.removeElectionValueDuplicates(slot);
       slotSynchronizationContext->isSynchronized.store(false);
       lock.unlock();

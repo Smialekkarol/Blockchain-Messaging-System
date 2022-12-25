@@ -23,14 +23,8 @@ void ElectionNotifier::notify() {
 }
 
 std::string ElectionNotifier::createMessage() {
-  static int counter{0};
-  std::uint64_t electionValue{7};
-  if (counter < 2) {
-    counter++;
-  } else {
-    ::io::RandomNumberGenerator randomNumberGenerator{};
-    electionValue = randomNumberGenerator.generate();
-  }
+  ::io::RandomNumberGenerator randomNumberGenerator{};
+  const auto electionValue = randomNumberGenerator.generate();
   consensusStorage.fillElectionValue(context.nodeConfiguration.self.address,
                                      context.header.slot, electionValue);
   return ::io::merge(context.serializedHeader,
