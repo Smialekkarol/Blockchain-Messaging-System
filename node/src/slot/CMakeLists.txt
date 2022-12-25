@@ -5,6 +5,8 @@ if(NOT ENABLE_UNIT_TESTS)
         ${SLOT_DIR}/PendingBlockSaver.cpp
         ${SLOT_DIR}/ContributionNotifier.cpp
         ${SLOT_DIR}/InspectionWaiter.cpp
+        ${SLOT_DIR}/ElectionNotifier.cpp
+        ${SLOT_DIR}/ElectionWaiter.cpp
         ${SLOT_DIR}/PendingBlockRemover.cpp
         ${SLOT_DIR}/CompleteBlockSaver.cpp
     )

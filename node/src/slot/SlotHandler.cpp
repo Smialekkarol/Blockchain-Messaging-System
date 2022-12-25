@@ -4,6 +4,8 @@
 
 #include "CompleteBlockSaver.hpp"
 #include "ContributionNotifier.hpp"
+#include "ElectionNotifier.hpp"
+#include "ElectionWaiter.hpp"
 #include "InspectionWaiter.hpp"
 #include "PendingBlockRemover.hpp"
 #include "PendingBlockSaver.hpp"
@@ -36,11 +38,8 @@ void SlotHandler::savePendingBlock() {
 };
 
 void SlotHandler::notifyNodesAboutContribution() {
-  consensusStorage.addContext(context.header.address, context.header.node,
-                              context.header.slot);
-  consensusStorage.setContribution(context.header.address, context.header.slot,
-                                   context.contributionWrapper.isContributing);
-  ContributionNotifier contributionNotifier{context, channelStore};
+  ContributionNotifier contributionNotifier{context, channelStore,
+                                            consensusStorage};
   contributionNotifier.notify();
 }
 
@@ -52,6 +51,20 @@ void SlotHandler::waitForNodesInspection() {
 void SlotHandler::removePendingBlockIfNoOneIsContributing() {
   PendingBlockRemover pendingBlockRemover{context, redis, consensusStorage};
   pendingBlockRemover.tryRemove();
+}
+
+void SlotHandler::sendElectionValue() {
+  ElectionNotifier electionNotifier{context, channelStore, consensusStorage};
+  electionNotifier.notify();
+}
+
+void SlotHandler::waitForNodesElection() {
+  ElectionWaiter electionWaiter{context, channelStore, consensusStorage};
+  electionWaiter.wait();
+}
+
+void SlotHandler::nominateValidator() {
+  consensusStorage.markValidator(context.header.slot);
 }
 
 void SlotHandler::saveCompleteBlock() {

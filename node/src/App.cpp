@@ -11,6 +11,7 @@
 #include "io/ConnectionStore.hpp"
 #include "io/ConsensusChannel.hpp"
 #include "io/ContributionWrapperSerializer.hpp"
+#include "io/ElectionValueWrapperSerializer.hpp"
 #include "io/HeaderSerializer.hpp"
 #include "io/Utils.hpp"
 
@@ -21,7 +22,7 @@
 #include "ConfigurationReader.hpp"
 #include "Consumer.hpp"
 
-void logConfiguration(const common::NodeConfiguration &config) {
+void logConfiguration(const ::common::NodeConfiguration &config) {
   const auto &nodes{config.nodes};
   spdlog::info("Loaded {} node(s)", nodes.size());
   for (const auto &node : nodes) {
@@ -44,7 +45,7 @@ int main(int argc, char **argv) {
   logConfiguration(configValue);
 
   ::db::RedisDB redis{};
-  ::db::ConsensusStorage consensusStorage{};
+  ::db::ConsensusStorage consensusStorage{configValue};
   Buffer buffer{};
   Consumer consumer(configValue, buffer);
   ::slot::TimerWheel timerWheel{};
@@ -52,7 +53,8 @@ int main(int argc, char **argv) {
   ::io::ChannelStore channelStore{};
   timerWheel.subscribe([&consensusStorage]() {
     const auto slot = ::common::utils::Time::getSlot();
-    consensusStorage.init(slot);
+    consensusStorage.initConditions(slot);
+    consensusStorage.initContexts(slot);
   });
   timerWheel.subscribe([&configValue, &consensusStorage, &redis, &buffer,
                         &consumer, &channelStore]() {
@@ -86,13 +88,6 @@ int main(int argc, char **argv) {
     ::io::HeaderSerializer headerSerializer{};
     const auto &deserializedHeader = headerSerializer.deserialize(header);
 
-    if (deserializedHeader.operation != ::io::ConsensusOperation::INSPECTION) {
-      spdlog::error("[{}]{} Received unsupported operation: {}",
-                    localNodeInfo.address, localNodeInfo.name,
-                    static_cast<std::uint16_t>(deserializedHeader.operation));
-      return;
-    }
-
     if (deserializedHeader.operation == ::io::ConsensusOperation::INSPECTION) {
       ::io::ContributionWrapperSerializer contributionWrapperSerializer{};
       const auto &contributionWrapper =
@@ -107,7 +102,7 @@ int main(int argc, char **argv) {
             deserializedHeader.timestamp, deserializedHeader.slot,
             contributionWrapper.isContributing);
       }
-      consensusStorage.init(deserializedHeader.slot);
+      consensusStorage.initConditions(deserializedHeader.slot);
       consensusStorage.addContext(deserializedHeader.address,
                                   deserializedHeader.node,
                                   deserializedHeader.slot);
@@ -121,6 +116,37 @@ int main(int argc, char **argv) {
             ->isSynchronized.store(true);
         consensusStorage.getSlotSynchronizationContext(deserializedHeader.slot)
             ->condition.notify_all();
+      }
+    }
+
+    if (deserializedHeader.operation == ::io::ConsensusOperation::ELECTION) {
+      ::io::ElectionValueWrapperSerializer electionValueWrapperSerializer{};
+      const auto &electionWrapper =
+          electionValueWrapperSerializer.deserialize(body);
+      spdlog::info(
+          "[{}]{} Received: operation {}, node {}, address {} , timestamp "
+          "{} , slot {} , electionValue {}",
+          localNodeInfo.address, localNodeInfo.name,
+          static_cast<std::uint16_t>(deserializedHeader.operation),
+          deserializedHeader.node, deserializedHeader.address,
+          deserializedHeader.timestamp, deserializedHeader.slot,
+          electionWrapper.value);
+
+      consensusStorage.fillElectionValue(deserializedHeader.address,
+                                         deserializedHeader.slot,
+                                         electionWrapper.value);
+
+      if (consensusStorage.areAllElectionValuesPresent(
+              deserializedHeader.slot)) {
+        consensusStorage.getSlotSynchronizationContext(deserializedHeader.slot)
+            ->isSynchronized.store(true);
+        consensusStorage.getSlotSynchronizationContext(deserializedHeader.slot)
+            ->condition.notify_all();
+        spdlog::info("[{}]{} Received: operation {},  slot {}, all election "
+                     "values set, notifing watier.",
+                     localNodeInfo.address, localNodeInfo.name,
+                     static_cast<std::uint16_t>(deserializedHeader.operation),
+                     deserializedHeader.slot);
       }
     }
   });
