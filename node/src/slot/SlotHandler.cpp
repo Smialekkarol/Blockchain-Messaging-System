@@ -35,7 +35,6 @@ void SlotHandler::handle() {
 }
 
 void SlotHandler::savePendingBlock() {
-  consensusStorage.initContexts(context.block.slot);
   PendingBlockSaver PendingBlockSaver{context, redis, buffer};
   PendingBlockSaver.save();
 };

@@ -54,7 +54,8 @@ int main(int argc, char **argv) {
   ::io::ChannelStore channelStore{};
   timerWheel.subscribe([&consensusStorage]() {
     const auto slot = ::common::utils::Time::getSlot();
-    consensusStorage.init(slot);
+    consensusStorage.initConditions(slot);
+    consensusStorage.initContexts(slot);
   });
   timerWheel.subscribe([&configValue, &consensusStorage, &redis, &buffer,
                         &consumer, &channelStore]() {
@@ -102,7 +103,7 @@ int main(int argc, char **argv) {
             deserializedHeader.timestamp, deserializedHeader.slot,
             contributionWrapper.isContributing);
       }
-      consensusStorage.init(deserializedHeader.slot);
+      consensusStorage.initConditions(deserializedHeader.slot);
       consensusStorage.addContext(deserializedHeader.address,
                                   deserializedHeader.node,
                                   deserializedHeader.slot);
@@ -132,7 +133,6 @@ int main(int argc, char **argv) {
           deserializedHeader.timestamp, deserializedHeader.slot,
           electionWrapper.value);
 
-      consensusStorage.init(deserializedHeader.slot);
       consensusStorage.fillElectionValue(deserializedHeader.address,
                                          deserializedHeader.slot,
                                          electionWrapper.value);

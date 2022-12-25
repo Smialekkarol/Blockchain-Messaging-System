@@ -17,6 +17,11 @@ void InspectionWaiter::wait() {
   const auto slot = context.header.slot;
   const auto slotSynchronizationContext =
       consensusStorage.getSlotSynchronizationContext(slot);
+  if (consensusStorage.areAllContributorsConfirmed(slot)) {
+    slotSynchronizationContext->isSynchronized.store(false);
+    return;
+  }
+
   std::unique_lock<std::mutex> lock{slotSynchronizationContext->mutex};
   slotSynchronizationContext->condition.wait(
       lock, [slotSynchronizationContext]() {

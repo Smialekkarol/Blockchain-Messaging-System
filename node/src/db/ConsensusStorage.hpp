@@ -46,7 +46,7 @@ public:
                              const std::uint64_t slot);
   void removeElectionValueDuplicates(const std::uint64_t slot);
   std::optional<ConsensusContext> findValidator(const std::uint64_t slot);
-  void init(const std::uint64_t slot);
+  void initConditions(const std::uint64_t slot);
   void initContexts(const std::uint64_t slot);
   void clearSlot(const std::uint64_t slot);
 

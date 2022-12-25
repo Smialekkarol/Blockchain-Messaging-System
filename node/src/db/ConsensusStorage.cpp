@@ -89,12 +89,13 @@ ConsensusStorage::findValidator(const std::uint64_t slot) {
 }
 
 void ConsensusStorage::initContexts(const std::uint64_t slot) {
+  contexts[config.self.address].try_emplace(slot, ConsensusContext{});
   for (const auto &node : config.nodes) {
-    contexts[node.address][slot];
+    contexts[node.address].try_emplace(slot, ConsensusContext{});
   }
 }
 
-void ConsensusStorage::init(const std::uint64_t slot) {
+void ConsensusStorage::initConditions(const std::uint64_t slot) {
   const auto &isContextFound =
       std::find_if(conditions.begin(), conditions.end(),
                    [slot](const auto &pair) { return pair.first == slot; });
@@ -113,6 +114,7 @@ void ConsensusStorage::clearSlot(const std::uint64_t slot) {
   std::scoped_lock lock(mutex);
   for (auto &[_, slotContexts] : contexts) {
     slotContexts.erase(slot);
+    conditions.erase(slot);
   }
 }
 
