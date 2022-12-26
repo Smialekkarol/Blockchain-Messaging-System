@@ -7,6 +7,10 @@ if(NOT ENABLE_UNIT_TESTS)
         ${SLOT_DIR}/InspectionWaiter.cpp
         ${SLOT_DIR}/ElectionNotifier.cpp
         ${SLOT_DIR}/ElectionWaiter.cpp
+        ${SLOT_DIR}/DataRelay.cpp
+        ${SLOT_DIR}/ContributorsDataWaiter.cpp
+        ${SLOT_DIR}/BroadcastNotifier.cpp
+        ${SLOT_DIR}/BroadcastWaiter.cpp
         ${SLOT_DIR}/PendingBlockRemover.cpp
         ${SLOT_DIR}/CompleteBlockSaver.cpp
     )

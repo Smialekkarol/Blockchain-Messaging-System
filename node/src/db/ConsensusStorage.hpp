@@ -37,15 +37,19 @@ public:
   ConsensusStorage &operator=(ConsensusStorage &&other) = delete;
   ~ConsensusStorage() = default;
 
+  void initConditions(const std::uint64_t slot);
+  void initContexts(const std::uint64_t slot);
   bool areAllContributorsConfirmed(const std::uint64_t slot);
   bool isAnyNodeContributing(const std::uint64_t slot);
   bool areAllElectionValuesPresent(const std::uint64_t slot);
   bool isElectionValueUnique(const std::string &address,
                              const std::uint64_t slot);
+  std::string getValidator(const std::uint64_t slot);
   void removeElectionValueDuplicates(const std::uint64_t slot);
-  std::optional<ConsensusContext> findValidator(const std::uint64_t slot);
-  void initConditions(const std::uint64_t slot);
-  void initContexts(const std::uint64_t slot);
+  bool isAllContributorsDataCollected(const std::uint64_t slot);
+  bool isResolved(const std::string &address, const std::uint64_t slot);
+  ::common::itf::Block getBlock(const std::string &address, const std::uint64_t slot);
+
   void clearSlot(const std::uint64_t slot);
 
   std::shared_ptr<SlotSychronizationContext>
@@ -61,8 +65,11 @@ public:
   void addBlock(const std::string &address, const std::uint64_t slot,
                 const ::common::itf::Block &block);
   void marAsResolved(const std::string &address, const std::uint64_t slot);
+  ::common::itf::Block mergeContributors(const std::uint64_t slot);
 
 private:
+  std::string getValidatorimpl(const std::uint64_t slot);
+
   ::common::NodeConfiguration nodeConfiguration;
   std::unordered_map<std::string,
                      std::unordered_map<std::uint64_t, ConsensusContext>>

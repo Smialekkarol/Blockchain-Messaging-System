@@ -47,7 +47,7 @@ void Channel::setupChannelErrorHandling() {
 }
 
 void Channel::declareQueue() {
-  spdlog::info("Channel declaring queue: {}", queue);
+  spdlog::debug("Channel declaring queue: {}", queue);
   channel.declareQueue(queue, AMQP::durable).onError([=](const char *message) {
     spdlog::error("Channel[{}] failed to declare queue. Error: {}", queue,
                   message);

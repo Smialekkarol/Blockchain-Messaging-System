@@ -28,6 +28,10 @@ private:
   void sendElectionValue();
   void waitForNodesElection();
   void nominateValidator();
+  void transferDataToValidator();
+  void waitForContributorsData();
+  void broadcast();
+  void waitForBroadcast();
   void saveCompleteBlock();
   void publishBlock();
 
@@ -47,6 +51,10 @@ private:
       [this]() { sendElectionValue(); },
       [this]() { waitForNodesElection(); },
       [this]() { nominateValidator(); },
+      [this]() { transferDataToValidator(); },
+      [this]() { waitForContributorsData(); },
+      [this]() { broadcast(); },
+      [this]() { waitForBroadcast(); },
       [this]() { saveCompleteBlock(); },
       [this]() { publishBlock(); }};
 };

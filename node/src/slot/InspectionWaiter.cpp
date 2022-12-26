@@ -8,6 +8,8 @@
 
 #include "InspectionWaiter.hpp"
 
+#include <spdlog/spdlog.h>
+
 namespace slot {
 InspectionWaiter::InspectionWaiter(SlotContext &context,
                                    ::db::ConsensusStorage &consensusStorage)
@@ -19,14 +21,21 @@ void InspectionWaiter::wait() {
       consensusStorage.getSlotSynchronizationContext(slot);
   if (consensusStorage.areAllContributorsConfirmed(slot)) {
     slotSynchronizationContext->isSynchronized.store(false);
+    spdlog::debug("[{}] InspectionWaiter::wait already all contributors "
+                 "confirmed. Proceeding to next handler.",
+                 context.block.slot);
     return;
   }
 
+  spdlog::debug("[{}] InspectionWaiter::wait waiting for other contributors.",
+               context.block.slot);
   std::unique_lock<std::mutex> lock{slotSynchronizationContext->mutex};
-  slotSynchronizationContext->condition.wait(
-      lock, [slotSynchronizationContext]() {
-        return slotSynchronizationContext->isSynchronized.load();
-      });
+  slotSynchronizationContext->condition.wait(lock, [this, slot]() {
+    return consensusStorage.areAllContributorsConfirmed(slot);
+  });
   slotSynchronizationContext->isSynchronized.store(false);
+  spdlog::debug(
+      "[{}] InspectionWaiter::wait finished waiting for other contributors.",
+      context.block.slot);
 }
 } // namespace slot
