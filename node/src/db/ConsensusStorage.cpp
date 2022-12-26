@@ -2,6 +2,8 @@
 #include <numeric>
 #include <set>
 
+#include <spdlog/spdlog.h>
+
 #include "ConsensusStorage.hpp"
 
 namespace db {
@@ -101,6 +103,9 @@ bool ConsensusStorage::isAllContributorsDataCollected(
 
 bool ConsensusStorage::isResolved(const std::string &address,
                                   const std::uint64_t slot) {
+  spdlog::info("isResolved address: {}, slot: {}, isResolved: {}", address,
+               slot, contexts[address][slot].isResolved);
+
   return contexts[address][slot].isResolved;
 }
 

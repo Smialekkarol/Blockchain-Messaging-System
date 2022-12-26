@@ -27,10 +27,9 @@ void ElectionWaiter::wait() {
              context.nodeConfiguration.self.address, slot)) {
     lock.lock();
     // TODO: handle timeout
-    slotSynchronizationContext->condition.wait(
-        lock, [slotSynchronizationContext]() {
-          return slotSynchronizationContext->isSynchronized.load();
-        });
+    slotSynchronizationContext->condition.wait(lock, [this, slot]() {
+      return consensusStorage.areAllElectionValuesPresent(slot);
+    });
     if (!consensusStorage.isElectionValueUnique(
             context.nodeConfiguration.self.address, slot)) {
       spdlog::error(

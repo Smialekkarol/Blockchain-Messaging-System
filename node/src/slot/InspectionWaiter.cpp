@@ -23,10 +23,9 @@ void InspectionWaiter::wait() {
   }
 
   std::unique_lock<std::mutex> lock{slotSynchronizationContext->mutex};
-  slotSynchronizationContext->condition.wait(
-      lock, [slotSynchronizationContext]() {
-        return slotSynchronizationContext->isSynchronized.load();
-      });
+  slotSynchronizationContext->condition.wait(lock, [this, slot]() {
+    return consensusStorage.areAllContributorsConfirmed(slot);
+  });
   slotSynchronizationContext->isSynchronized.store(false);
 }
 } // namespace slot

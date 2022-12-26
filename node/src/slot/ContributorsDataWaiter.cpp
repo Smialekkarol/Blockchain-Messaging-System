@@ -27,18 +27,19 @@ void ContributorsDataWaiter::wait() {
     consensusStorage.marAsResolved(context.nodeConfiguration.self.address,
                                    slot);
     slotSynchronizationContext->isSynchronized.store(false);
-    spdlog::info("I am validator and i have all contributors data");
+    spdlog::info(
+        "I am validator and i have all contributors data - early return");
     return;
   }
 
   std::unique_lock<std::mutex> lock{slotSynchronizationContext->mutex};
-  slotSynchronizationContext->condition.wait(
-      lock, [slotSynchronizationContext]() {
-        return slotSynchronizationContext->isSynchronized.load();
-      });
+  slotSynchronizationContext->condition.wait(lock, [this, slot]() {
+    return consensusStorage.isAllContributorsDataCollected(slot);
+  });
   context.broadcastBlock = consensusStorage.mergeContributors(slot);
   consensusStorage.marAsResolved(context.nodeConfiguration.self.address, slot);
   slotSynchronizationContext->isSynchronized.store(false);
-  spdlog::info("I am validator and i have all contributors data");
+  spdlog::info(
+      "I am validator and i have all contributors data - actual return");
 }
 } // namespace slot

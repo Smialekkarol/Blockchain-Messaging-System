@@ -37,7 +37,7 @@ void SlotHandler::handle() {
 }
 
 void SlotHandler::savePendingBlock() {
-  PendingBlockSaver PendingBlockSaver{context, redis, buffer};
+  PendingBlockSaver PendingBlockSaver{context, redis, buffer, consensusStorage};
   PendingBlockSaver.save();
 };
 
@@ -99,5 +99,5 @@ void SlotHandler::saveCompleteBlock() {
   completeBlockSaver.save();
 }
 
-void SlotHandler::publishBlock() { consumer.publish(context.block); }
+void SlotHandler::publishBlock() { consumer.publish(context.broadcastBlock); }
 } // namespace slot

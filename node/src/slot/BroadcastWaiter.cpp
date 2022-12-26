@@ -22,10 +22,13 @@ void BroadcastWaiter::wait() {
   const auto slot = context.header.slot;
   const auto slotSynchronizationContext =
       consensusStorage.getSlotSynchronizationContext(slot);
-  if (consensusStorage.isResolved(context.validator, slot)) {
+  const auto result = consensusStorage.isResolved(context.validator, slot);
+  spdlog::info("result {} ", result);
+  if (result) {
     context.broadcastBlock = consensusStorage.getBlock(context.validator, slot);
     slotSynchronizationContext->isSynchronized.store(false);
-    spdlog::info("I am not validator and i have finished waiting for validator "
+    spdlog::info("Early return I am not validator and i have finished waiting "
+                 "for validator "
                  "resolution: {} from {} at slot {}",
                  consensusStorage.isResolved(context.validator, slot),
                  context.validator, slot);
@@ -34,12 +37,14 @@ void BroadcastWaiter::wait() {
 
   std::unique_lock<std::mutex> lock{slotSynchronizationContext->mutex};
   slotSynchronizationContext->condition.wait(
-      lock, [slotSynchronizationContext]() {
-        return slotSynchronizationContext->isSynchronized.load();
+      lock, [&slotSynchronizationContext, this, slot]() {
+        return slotSynchronizationContext->isSynchronized.load() &&
+               consensusStorage.isResolved(context.validator, slot);
       });
   context.broadcastBlock = consensusStorage.getBlock(context.validator, slot);
   slotSynchronizationContext->isSynchronized.store(false);
-  spdlog::info("I am not validator and i have finished waiting for validator "
+  spdlog::info("The actual waiting I am not validator and i have finished "
+               "waiting for validator "
                "resolution: {} from {} at slot {}",
                consensusStorage.isResolved(context.validator, slot),
                context.validator, slot);
