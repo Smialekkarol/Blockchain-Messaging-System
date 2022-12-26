@@ -13,20 +13,12 @@ CompleteBlockSaver::CompleteBlockSaver(SlotContext &context,
     : context{context}, redis{redis}, consensusStorage{consensusStorage} {}
 
 void CompleteBlockSaver::save() {
-  // context.broadcastBlock.state = ::common::itf::BlockState::COMPLETED;
-  // spdlog::info("CompleteBlockSaver::save start");
-  // redis.update(context.broadcastBlock, context.blockIndex,
-  //              ::common::itf::DEFAULT_BLOCKAIN);
-  // spdlog::info("CompleteBlockSaver::save after redis update");
-  // consensusStorage.clearSlot(context.header.slot);
-  // spdlog::info("CompleteBlockSaver::save after clearslot");
-
+  spdlog::debug("[{}] CompleteBlockSaver::save saving broadcasted block and "
+               "clearing slot consensus context",
+               context.header.slot);
   context.block.state = ::common::itf::BlockState::COMPLETED;
-  spdlog::info("CompleteBlockSaver::save start");
-  redis.update(context.block, context.blockIndex,
+  redis.update(context.broadcastBlock, context.blockIndex,
                ::common::itf::DEFAULT_BLOCKAIN);
-  spdlog::info("CompleteBlockSaver::save after redis update");
   consensusStorage.clearSlot(context.header.slot);
-  spdlog::info("CompleteBlockSaver::save after clearslot");
 }
 } // namespace slot

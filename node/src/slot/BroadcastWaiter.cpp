@@ -15,23 +15,23 @@ BroadcastWaiter::BroadcastWaiter(SlotContext &context,
 
 void BroadcastWaiter::wait() {
   if (context.isValidator) {
-    spdlog::info("I am validator so i don't wait for bradcast");
+    spdlog::debug("[{}] BroadcastWaiter::wait I am validator so i don't wait "
+                 "for bradcast.",
+                 context.header.slot);
     return;
   }
-  spdlog::info("I am not validator and i am starting waiting");
+  spdlog::debug(
+      "[{}] BroadcastWaiter::wait I am not validator and i am starting waiting",
+      context.header.slot);
   const auto slot = context.header.slot;
   const auto slotSynchronizationContext =
       consensusStorage.getSlotSynchronizationContext(slot);
-  const auto result = consensusStorage.isResolved(context.validator, slot);
-  spdlog::info("result {} ", result);
-  if (result) {
+  if (consensusStorage.isResolved(context.validator, slot)) {
     context.broadcastBlock = consensusStorage.getBlock(context.validator, slot);
     slotSynchronizationContext->isSynchronized.store(false);
-    spdlog::info("Early return I am not validator and i have finished waiting "
-                 "for validator "
-                 "resolution: {} from {} at slot {}",
-                 consensusStorage.isResolved(context.validator, slot),
-                 context.validator, slot);
+    spdlog::debug("[{}] BroadcastWaiter::wait I am not validator and i have "
+                 "finished waiting early return.",
+                 context.header.slot);
     return;
   }
 
@@ -43,10 +43,9 @@ void BroadcastWaiter::wait() {
       });
   context.broadcastBlock = consensusStorage.getBlock(context.validator, slot);
   slotSynchronizationContext->isSynchronized.store(false);
-  spdlog::info("The actual waiting I am not validator and i have finished "
-               "waiting for validator "
-               "resolution: {} from {} at slot {}",
-               consensusStorage.isResolved(context.validator, slot),
-               context.validator, slot);
+
+  spdlog::debug("[{}] BroadcastWaiter::wait I am not validator and i have "
+               "finished waiting actual return.",
+               context.header.slot);
 }
 } // namespace slot

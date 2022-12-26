@@ -15,10 +15,14 @@ ContributorsDataWaiter::ContributorsDataWaiter(
 
 void ContributorsDataWaiter::wait() {
   if (!context.isValidator) {
-    spdlog::info("I am not validator so i don't wait for contribution data.");
+    spdlog::debug("[{}] SlotHandler::waitForContributorsData I am not validator "
+                 "so i don't wait for contribution data.",
+                 context.header.slot);
     return;
   }
-  spdlog::info("I am validator so i wait for contributors data.");
+  spdlog::debug("[{}] SlotHandler::waitForContributorsData I am validator so i "
+               "wait for contributors data.",
+               context.header.slot);
   const auto slot = context.header.slot;
   const auto slotSynchronizationContext =
       consensusStorage.getSlotSynchronizationContext(slot);
@@ -27,8 +31,10 @@ void ContributorsDataWaiter::wait() {
     consensusStorage.marAsResolved(context.nodeConfiguration.self.address,
                                    slot);
     slotSynchronizationContext->isSynchronized.store(false);
-    spdlog::info(
-        "I am validator and i have all contributors data - early return");
+
+    spdlog::debug("[{}] SlotHandler::waitForContributorsData I am validator and "
+                 "i have all contributors data - early return",
+                 context.header.slot);
     return;
   }
 
@@ -39,7 +45,8 @@ void ContributorsDataWaiter::wait() {
   context.broadcastBlock = consensusStorage.mergeContributors(slot);
   consensusStorage.marAsResolved(context.nodeConfiguration.self.address, slot);
   slotSynchronizationContext->isSynchronized.store(false);
-  spdlog::info(
-      "I am validator and i have all contributors data - actual return");
+  spdlog::debug("[{}] SlotHandler::waitForContributorsData I am validator and "
+               "i have all contributors data - actual return",
+               context.header.slot);
 }
 } // namespace slot

@@ -2,6 +2,8 @@
 
 #include "ContributionNotifier.hpp"
 
+#include <spdlog/spdlog.h>
+
 namespace slot {
 ContributionNotifier::ContributionNotifier(
     SlotContext &context, ::io::ChannelStore &channelStore,
@@ -18,6 +20,9 @@ void ContributionNotifier::notify() {
   const auto &message = createMessage();
   const auto &consensusChannels =
       channelStore.getRemote(::io::ChannelType::CONSENSUS);
+
+  spdlog::debug("[{}] ContributionNotifier::notify. Sending to channels: {}",
+               context.header.slot, message);
 
   for (auto *channel : consensusChannels) {
     channel->publish(message);

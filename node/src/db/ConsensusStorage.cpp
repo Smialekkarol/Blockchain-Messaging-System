@@ -93,6 +93,7 @@ std::string ConsensusStorage::getValidatorimpl(const std::uint64_t slot) {
 
 bool ConsensusStorage::isAllContributorsDataCollected(
     const std::uint64_t slot) {
+  std::scoped_lock lock(mutex);
   return std::all_of(contexts.begin(), contexts.end(), [slot](auto &pair) {
     if (pair.second[slot].isContributing.value()) {
       return pair.second[slot].block.data.size() > 0;
@@ -103,14 +104,13 @@ bool ConsensusStorage::isAllContributorsDataCollected(
 
 bool ConsensusStorage::isResolved(const std::string &address,
                                   const std::uint64_t slot) {
-  spdlog::info("isResolved address: {}, slot: {}, isResolved: {}", address,
-               slot, contexts[address][slot].isResolved);
-
+  std::scoped_lock lock(mutex);
   return contexts[address][slot].isResolved;
 }
 
 ::common::itf::Block ConsensusStorage::getBlock(const std::string &address,
                                                 const std::uint64_t slot) {
+  std::scoped_lock lock(mutex);
   return contexts[address][slot].block;
 }
 
@@ -118,11 +118,13 @@ void ConsensusStorage::initContexts(const std::uint64_t slot) {
   contexts[nodeConfiguration.self.address].try_emplace(slot,
                                                        ConsensusContext{});
   for (const auto &node : nodeConfiguration.nodes) {
+    std::scoped_lock lock(mutex);
     contexts[node.address].try_emplace(slot, ConsensusContext{});
   }
 }
 
 void ConsensusStorage::initConditions(const std::uint64_t slot) {
+  std::scoped_lock lock(mutex);
   const auto &isContextFound =
       std::find_if(conditions.begin(), conditions.end(),
                    [slot](const auto &pair) { return pair.first == slot; });
@@ -134,6 +136,7 @@ void ConsensusStorage::initConditions(const std::uint64_t slot) {
 
 std::shared_ptr<SlotSychronizationContext>
 ConsensusStorage::getSlotSynchronizationContext(const std::uint64_t slot) {
+  std::scoped_lock lock(mutex);
   return conditions[slot];
 }
 
@@ -186,6 +189,8 @@ void ConsensusStorage::markValidator(const std::uint64_t slot) {
                     }
                   });
   }
+  spdlog::debug("[{}] ConsensusStorage::markValidator validator: {}", slot,
+               validator.data());
   contexts[validator.data()][slot].isValidator = true;
 }
 
@@ -231,6 +236,7 @@ ConsensusStorage::mergeContributors(const std::uint64_t slot) {
             [](const auto &message1, const auto &message2) {
               return message1.timestamp < message2.timestamp;
             });
+  validatorBlock.state = ::common::itf::BlockState::COMPLETED;
   return validatorBlock;
 }
 } // namespace db

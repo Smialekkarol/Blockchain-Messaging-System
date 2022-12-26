@@ -18,8 +18,9 @@ void DataRelay::transfer() {
   context.isValidator =
       context.validator == context.nodeConfiguration.self.address;
 
-  spdlog::info("Validator is: {}", context.validator);
   if (context.isValidator || !context.contributionWrapper.isContributing) {
+    spdlog::debug("[{}] DataRelay::transfer i am not sending data",
+                 context.header.slot);
     return;
   }
 
@@ -27,6 +28,8 @@ void DataRelay::transfer() {
                             context.header.slot, context.block);
   const auto &message = createMessage();
   auto &validatorChannel = channelStore.getRemote(context.validator);
+  spdlog::debug("[{}] DataRelay::transfer sending data: {}", context.header.slot,
+               message);
   validatorChannel.publish(message);
   consensusStorage.marAsResolved(context.nodeConfiguration.self.address,
                                  context.header.slot);

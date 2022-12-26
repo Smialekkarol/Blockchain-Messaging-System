@@ -17,24 +17,25 @@ void BroadcastNotifier::broadcast() {
   context.serializedHeader = headerSerializer.serialize(context.header);
 
   if (!context.isValidator) {
-    spdlog::info("I am not validator so i don't do bradcast, i will start "
-                 "waiting for broadcast");
+    spdlog::debug("[{}] SlotHandler::broadcast I am not validator so i don't do "
+                 "broadcast. Early return.",
+                 context.header.slot);
     return;
   }
 
   const auto &message = createMessage();
   const auto &consensusChannels =
       channelStore.getRemote(::io::ChannelType::CONSENSUS);
-  spdlog::info("I am validator so i start sendind broadcast");
+  spdlog::debug("[{}] SlotHandler::broadcast I am not validator, so i broadcast "
+               "message: {}",
+               context.header.slot, message);
   for (auto *channel : consensusChannels) {
     channel->publish(message);
   }
-
-  spdlog::info("I am validator and i have finished broadcast");
 }
 
 std::string BroadcastNotifier::createMessage() {
   return ::io::merge(context.serializedHeader,
-                     blockSerializer.serialize(context.block));
+                     blockSerializer.serialize(context.broadcastBlock));
 }
 } // namespace slot
