@@ -28,17 +28,13 @@ std::string readNodes(const std::string &configPath,
     std::cout << "configPath: " << configPath << " nodeName: " << nodeName
               << std::endl;
     auto config = YAML::LoadFile(configPath);
-    std::cout << "After loadFile" << std::endl;
     std::string nodeAddress{};
     const auto &nodes = config["nodes"];
-    std::cout << "After getting nodes" << std::endl;
     for (unsigned int i = 0; i < nodes.size(); i++) {
-      std::cout << "iteration: " << i << std::endl;
       if (nodes[i]["name"].as<std::string>() == nodeName) {
         return nodes[i]["address"].as<std::string>();
       }
     }
-    std::cout << "After loop" << std::endl;
   } catch (const YAML::Exception &exception) {
     spdlog::error("Configuration error: {}", exception.what());
     return "";

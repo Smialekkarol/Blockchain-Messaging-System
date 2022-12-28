@@ -24,3 +24,8 @@ service rabbitmq-server start
 
 # how to run redis server in the background
 redis-server --daemonize yes
+
+redis-server --daemonize yes && service rabbitmq-server start
+
+# 
+config set stop-writes-on-bgsave-error no
