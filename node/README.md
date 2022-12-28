@@ -11,3 +11,21 @@ Change directory to the Blockchain-Private.
 ./build/node/src/node /var/fpwork/Blockchain-Private/node/examples/config/NodeA/config.yaml
 
 First argument is configuration file. Please see node/examples for more details.
+
+# How to create rabbitmq user
+Comands to create needed user for each node.
+rabbitmqctl add_user user1 user1
+rabbitmqctl set_user_tags user1 administrator
+rabbitmqctl set_permissions -p / user1 ".*" ".*" ".*"
+
+
+# how to run rabbitmq in the background 
+service rabbitmq-server start
+
+# how to run redis server in the background
+redis-server --daemonize yes
+
+redis-server --daemonize yes && service rabbitmq-server start
+
+# 
+config set stop-writes-on-bgsave-error no

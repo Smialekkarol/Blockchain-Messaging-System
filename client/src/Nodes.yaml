@@ -1,0 +1,7 @@
+nodes:
+  - name: NodeA
+    address: "amqp://user1:user1@172.17.0.2"
+  - name: NodeB
+    address: "amqp://user1:user1@172.17.0.3"
+  - name: NodeC
+    address: "amqp://user1:user1@172.17.0.4"

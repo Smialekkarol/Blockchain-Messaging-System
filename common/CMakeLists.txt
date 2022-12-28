@@ -5,6 +5,16 @@ set(COMMON_SOURCES
 
 add_library(common ${COMMON_SOURCES})
 
+find_package(GTest CONFIG REQUIRED)
+find_package(Threads REQUIRED)
+find_package(static_mock CONFIG REQUIRED)
+
+set(libraries GTest::gtest GTest::gmock GTest::gtest_main static_mock::static_mock Threads::Threads)
+target_include_directories(common PUBLIC ${libraries} ${static_mock_INCLUDE_DIRS})
+target_link_libraries(common PUBLIC ${libraries})
+
+include(GoogleTest)
+
 target_include_directories(common PUBLIC .)
 
 add_subdirectory(itf)
